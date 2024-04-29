@@ -21,7 +21,7 @@ function loadScript(url) {
 }
 
 // Load Scripts
-
+loadScript("_content/MudBlazor/MudBlazor.min.js");
 
 
 // Utility functions that are globally available to the app

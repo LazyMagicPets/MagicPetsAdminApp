@@ -21,23 +21,27 @@
 *@
 @inject ISessionsViewModel SessionsViewModel
 
-@if (ViewModel!.IsSignedIn)
-{
-    <h1>Welcome, @ViewModel!.AuthProcess.Login</h1>
-}
-else
-{
-    <h1>Hi there, lets get connected!</h1>
-}
-<LzAuth ViewModel="@ViewModel!.AuthProcess"/>
-<button @onclick="OnWSConnect">WebSocket Connect</button>
-<button @onclick="OnSendMessage">WebSocket Message</button>
-<button @onclick="OnWSDisconnect">WebSocket Disconnect</button>
-
-@if(ViewModel!.IsSignedIn)
-{
-    <button @onclick="OnGetJwt">Get JWT</button>
-}
+<MudPaper Class="d-flex align-start flex-grow-1">
+    <MudCard Outlined="true" Class="flex-initial" Width="45%" Elevation="0">
+        <MudCardContent Class="d-flex flex-column">
+            @if (ViewModel!.IsSignedIn)
+            {
+                <h1>Welcome, @ViewModel!.AuthProcess?.Login</h1>
+                <ClientInfoCard ViewModel="@ViewModel!.CallerInfo" />
+            }
+            else
+            {
+                <h1>Hi there, lets get connected!</h1>
+            }
+            <LzAuth ViewModel="@ViewModel!.AuthProcess" />
+        </MudCardContent>
+        <MudCardActions Class="d-flex align-content-start flex-wrap flex-grow-1 gap-1">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnWSConnect())">WebSocket Connect</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnSendMessage())">WebSocket Message</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnWSDisconnect())">WebSocket Disconnect</MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudPaper>
 
 @code {
     protected override async Task OnInitializedAsync()

@@ -1,6 +1,5 @@
 ﻿using Amazon;
 
-
 namespace ViewModels;
 /// <summary>
 /// The SessionViewModel is the root viewModel for a user session.
@@ -18,7 +17,7 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
         [FactoryInject] ILzMessages messages, // singleton
         [FactoryInject] IAuthProcess authProcess, // transient
         [FactoryInject] IMethodMapWrapper methodMap, // singleton
-        [FactoryInject] IPetsViewModelFactory petsViewModelFactory // transient
+        [FactoryInject] IUsersViewModelFactory usersViewModelFactory // transient
         )
         : base( authProcess, osAccess, clientConfig, internetConnectivity, messages)  
     {
@@ -26,9 +25,8 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
         ILzHttpClient httpClient = new LzHttpClient(clientConfig, methodMap, authProcess.AuthProvider, lzHost);
         Store = new Service(httpClient);
         NotificationsSvc = new StoreNotificationSvc(this, clientConfig, lzHost, internetConnectivity);
-        this.petsViewModelFactory = petsViewModelFactory ?? throw new ArgumentNullException(nameof(petsViewModelFactory));
-        PetsViewModel = petsViewModelFactory.Create(this);
-        TenantName = AppConfig.TenantName;
+        this.usersViewModelFactory = usersViewModelFactory ?? throw new ArgumentNullException(nameof(usersViewModelFactory));
+        UsersViewModel = usersViewModelFactory.Create(this);
         try
         {
             var _region = (string?)clientConfig.AuthConfig["awsRegion"] ?? throw new Exception("Cognito AuthConfig.region is null");
@@ -42,19 +40,30 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
         }
     }
     public IService Store { get; set; }
-    private IPetsViewModelFactory petsViewModelFactory;  
-    public PetsViewModel PetsViewModel { get; set; }
+    private IUsersViewModelFactory usersViewModelFactory;
+    public UsersViewModel UsersViewModel { get; set; }
     public string TenantName { get; set; } = string.Empty;
+    public CallerInfo? CallerInfo { get; set; }
 
     // Base class calls LoadAsync () when IsSignedIn changes to true
     public override async Task LoadAsync()
     {
-        await PetsViewModel.ReadAsync();
+        try
+        {
+            var callerInfoJson = await Store.CallerInfoAsync();
+            if (callerInfoJson != null)
+                CallerInfo = JsonConvert.DeserializeObject<CallerInfo>(callerInfoJson);
+        } catch (Exception ex)
+        {
+            Console.WriteLine($"CallerInfoAsync failed. {ex.Message}");
+        }   
+
+        await UsersViewModel.ReadAsync();
     }
     // Base class calls UnloadAsync () when IsSignedIn changes to false
     public override async Task UnloadAsync()
     {
-        PetsViewModel = petsViewModelFactory.Create(this);
+        UsersViewModel = usersViewModelFactory.Create(this);
         await Task.Delay(0);    
     }
 }

@@ -86,7 +86,7 @@ Note: The ISessionsViewModel is generally first injected in the MainLayout.razor
     private async Task GetAuthConfigAsync()
     {
         ViewModel!.ClientConfig ??= new LzClientConfig();
-        var authconfigurl = Host.Url + "config";
+        var authconfigurl = Host.TenancyUrl + "config";
         configError = false;
         try
         {

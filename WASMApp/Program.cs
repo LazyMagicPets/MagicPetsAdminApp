@@ -36,6 +36,7 @@ public partial class Program
                 apiUrl = tenancyUrl = builder.HostEnvironment.BaseAddress;
                 break;
             default:
+
                 Console.WriteLine("Development environment");
                 var envVar = hostEnvironment.Environment;
                 // The variable is a list of urls, separated by a comma.
@@ -56,9 +57,10 @@ public partial class Program
                 url: apiUrl,  // api url
                 tenancyUrl: tenancyUrl, // tenancy assets url
                 isMAUI: false, // sets isWASM to true
-                isAndroid: false, 
+                isAndroid: false,
                 isLocal: isLocal))
             .AddBlazorUI(); // See Config/ConfigureViewModels.cs
+            
 
         await builder.Build().RunAsync();
     }

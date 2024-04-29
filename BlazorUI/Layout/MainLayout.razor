@@ -13,23 +13,38 @@
     initialization lifecycle and operate property before and after initialization. 
 *@
 
-<div class="page">
-    
-    @if(ViewModel!.IsInitialized)
-    {
-    <div class="sidebar">
-        <NavMenu ViewModel="@ViewModel" Title="@tenancyName"/>
-    </div>
-    }
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
-    <main>
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<MudLayout>
+	<MudAppBar>
+		<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+	</MudAppBar>
+	<MudDrawer @bind-Open="_drawerOpen">
+		<MudNavMenu>
+			@if (ViewModel!.IsInitialized)
+			{
+				<MudNavLink Href="/HomePage"><MudIcon Icon="@Icons.Material.Filled.Home" />Home</MudNavLink>
+                @if(ViewModel!.IsSignedIn)
+                {
+                    @if(ViewModel!.IsAdmin)
+                    {
+                        <MudNavLink Href="/AdminPage">Admin</MudNavLink>
+                    }
+                    <MudNavLink Href="/UsersPage">Users</MudNavLink>
+                }
+            }
+		</MudNavMenu>
+	</MudDrawer>
+	<MudMainContent Class="d-flex align-start">
+        @Body
+	</MudMainContent>
+</MudLayout>
 
 @code {
+    [Parameter] public string Title { get; set; } = "";
+
     private string tenancyHostUrl = string.Empty;
 
     private string? tenancyName = string.Empty;
@@ -44,5 +59,11 @@
         tenancyName = ViewModel?.TenancyConfig?["tenantName"]?.ToString();
 
         await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private bool _drawerOpen = true;
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
     }
 }

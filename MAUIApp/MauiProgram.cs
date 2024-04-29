@@ -28,7 +28,7 @@ public static class MauiProgram
         //Platforms.Android.DangerousTrustProvider.Register();
 #endif
 
-        var localHost = false; // flip this to true to hit the local host api
+        var localHost = true; // flip this to true to hit the local host api
         var cloudHost = "https://admin.lazymagicdev.click/";
         var apiUrl = string.Empty;
         var tenancyUrl = string.Empty;
@@ -44,7 +44,7 @@ public static class MauiProgram
         {
             // The CI/CD pipeline is responsible for writing the hosturl.json file to the app package
             // Resources/Raw folder. We don't put this file in wwwroot/Tenancy because recoruces in
-            // that folder may be retrieved from the host url instead of deployed with the app.
+            // that folder so they may be retrieved from the host url instead of deployed with the app.
             using var stream = FileSystem.OpenAppPackageFileAsync("hosturl.json").Result;
             using var reader = new StreamReader(stream);
             var contents = reader.ReadToEnd();

@@ -15,7 +15,8 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.Web" />
 		<PackageReference Include="LazyStack.Client.Auth.Cognito" />
-		<PackageReference Include="LazyStack.Blazor.Auth" />
+		<PackageReference Include="LazyStack.MudBlazorComponents.Auth" />
+		<PackageReference Include="MudBlazor" />
 		<ProjectReference Include="..\ViewModels\ViewModels.csproj" />
 	</ItemGroup>
 

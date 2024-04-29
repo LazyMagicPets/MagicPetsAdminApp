@@ -1,0 +1,36 @@
+﻿@namespace BlazorUI
+@page "/UserPage"
+@inherits LzCoreComponentBaseAssignViewModel<UserViewModel>
+@inject ISessionsViewModel SessionsViewModel
+<h3>Users</h3>
+
+<MudCard>
+    <MudForm Model="@model" @ref="@form">
+        <MudTextField Label="Name" @bind-Value="model.Name" />
+        <MudTextField Label="Email" @bind-Value="model.Email" />
+        <MudTextField Label="Phone" @bind-Value="model.Phone" />
+        <MudCheckBox Label="Employee" @bind-Value="model.Employee" />
+        <MudCheckBox Label="Admin" @bind-Value="model.Admin" />
+    </MudForm>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Edit())">Edit</MudButton>
+    </MudCardActions>
+</MudCard>
+
+
+@code {
+    private UserModel model => ViewModel!.Data!;
+    private MudForm? form;
+
+    protected override void OnInitialized()
+    {
+        ViewModel = SessionsViewModel!.SessionViewModel!.UsersViewModel.CurrentViewModel;
+        base.OnInitialized();
+    }
+
+    private async Task Edit()
+    {
+        //await ViewModel!.EditAsync();
+    }   
+
+}

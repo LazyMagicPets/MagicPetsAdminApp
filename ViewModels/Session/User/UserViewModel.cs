@@ -1,19 +1,19 @@
 ﻿namespace ViewModels;
 
 [Factory]
-public class PetViewModel : LzItemViewModelAuthNotifications<Pet, PetModel>
+public class UserViewModel : LzItemViewModelAuthNotifications<User, UserModel>
 {
-    public PetViewModel(
+    public UserViewModel(
         ISessionViewModel sessionViewModel,
         ILzParentViewModel parentViewModel,
-        Pet pet,
+        User pet,
         bool? isLoaded = null
         ) : base(sessionViewModel, pet, model: null, isLoaded) 
     {
         _sessionViewModel = sessionViewModel;   
         ParentViewModel = parentViewModel;
-        _DTOCreateAsync = sessionViewModel.Store.AddPetAsync;
-        _DTOReadIdAsync = sessionViewModel.Store.GetPetByIdAsync;
+        _DTOCreateAsync = sessionViewModel.Store.AddUserAsync;
+        _DTOReadIdAsync = sessionViewModel.Store.GetUserByIdAsync;
     }
     private ISessionViewModel _sessionViewModel;
     public override string Id => Data?.Id ?? string.Empty;

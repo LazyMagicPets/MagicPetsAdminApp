@@ -1,0 +1,46 @@
+﻿@namespace BlazorUI
+<h3>ClientInfo - debug helper</h3>
+@if (ViewModel is not null)
+{
+    <table>
+        <tr>
+            <td>User Id:</td>
+            <td>@ViewModel.LzUserId</td>
+        </tr>
+        <tr>
+            <td>UserName:</td>
+            <td>@ViewModel.UserName</td>
+        </tr>
+        <tr>
+            <td>Email:</td>
+            <td>@ViewModel.Email</td>
+        </tr>
+        <tr>
+            <td>Tenancy:</td>
+            <td>@ViewModel.Tenancy</td>
+        </tr>
+        <tr>
+            <td>Table:</td>
+            <td>@ViewModel.Table</td>
+        </tr>
+        <tr>
+            <td>Permissions:</td>
+            <td>
+                <table>
+                    @foreach (var perm in ViewModel.Permissions)
+                    {
+                        <tr>
+                            <td>@perm</td>
+                        </tr>
+                    }
+                </table>
+            </td>
+        </tr>
+    </table>
+}
+
+@code {
+    
+    [Parameter] public CallerInfo? ViewModel { get; set; }   
+
+}

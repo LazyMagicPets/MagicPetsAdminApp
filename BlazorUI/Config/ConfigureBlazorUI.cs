@@ -1,6 +1,4 @@
-﻿
-
-namespace BlazorUI;
+﻿namespace BlazorUI;
 
 public static class ConfigureBlazorUI
 {
@@ -20,6 +18,7 @@ public static class ConfigureBlazorUI
             .ReplaceVars();
 
         return services
+            .AddMudServices()
             .AddSingleton<ILzMessages>(messages)
             .AddAppViewModels()
             .AddLazyStackComponents()

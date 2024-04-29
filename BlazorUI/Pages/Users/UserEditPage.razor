@@ -1,0 +1,88 @@
+﻿@namespace BlazorUI
+@page "/UserEditPage"
+@inherits LzCoreComponentBaseAssignViewModel<UserViewModel>
+@inject ISessionsViewModel SessionsViewModel
+@inject NavigationManager NavigationManager
+<MudPaper Class="d-flex flex-column">
+    <h3>UserEditPage</h3>
+
+    <MudCard>
+        <MudCardContent>
+            <MudForm Model="@model" @ref="@form" Validation="@(ValidateValue)">
+                <MudTextField Label="Name" @bind-Value="model.Name" />
+                <MudTextField Label="Email" @bind-Value="model.Email" />
+                <MudTextField Label="Phone" @bind-Value="model.Phone" />
+                <MudCheckBox Label="Employee" @bind-Value="model.Employee" />
+                <MudCheckBox Label="Admin" @bind-Value="model.Admin" />
+            </MudForm>
+            <MudText>@saveResult</MudText>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Submit())">Submit</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Cancel())">Cancel</MudButton>
+        </MudCardActions>
+    </MudCard>
+</MudPaper>
+@code {
+    private string saveResult = string.Empty;
+    private EditContext? editContext;
+    private UserModel model => ViewModel?.Data!;
+    private UsersViewModel usersViewModel => SessionsViewModel!.SessionViewModel!.UsersViewModel;
+    private bool IsModified => (editContext == null) ? false : editContext.IsModified();
+    private bool IsAdd => ViewModel!.IsNew;
+    private bool IsEdit => ViewModel!.IsEdit;
+    private bool IsExit = false;
+
+    private MudForm? form;
+
+    private UserModelValidator userModelValidator = new UserModelValidator();
+
+    private Func<UserModelValidator, object, string, Task<IEnumerable<string>>> ValidateValue =>
+        async (validator, model, propertyName) =>
+        {
+            var result = await validator.ValidateAsync(ValidationContext<UserModel>.CreateWithOptions((UserModel)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ViewModel = SessionsViewModel!.SessionViewModel!.UsersViewModel.CurrentViewModel;
+        await ViewModel!.OpenEditAsync();
+        editContext = new EditContext(model!);
+        await base.OnInitializedAsync();
+    }
+
+    private async Task Cancel()
+    {
+        IsExit = true;
+        var state = ViewModel!.State;
+        await usersViewModel.CancelCurrentViewModelEditAsync();
+
+        if (state == LzItemViewModelState.New)
+        {
+            NavigationManager.NavigateTo("UsersPage");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("UserPage");
+        }
+    }
+
+    private async Task Submit()
+    {
+        await form!.Validate();
+        if (!form.IsValid)
+            return;
+
+        var (success, msg) = await usersViewModel.SaveCurrentViewModelAsync(model.Id);
+
+        if (success)
+            NavigationManager.NavigateTo("UserPage");
+
+        saveResult = msg;
+    }
+
+}
