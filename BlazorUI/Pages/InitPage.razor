@@ -24,12 +24,11 @@ Note: The ISessionsViewModel is generally first injected in the MainLayout.razor
 @inject HttpClient HttpClient 
 @inject NavigationManager NavigationManager 
 
-@if(!configFound)
+@if(ViewModel!.ConfigFound)
 {
-    if(configError)
+    if(ViewModel!.ConfigError)
     {
         <p>Could not read configuration </p>
-        <button @onclick="GetAuthConfigAsync">Retry</button>
     }
     else
     {
@@ -38,8 +37,6 @@ Note: The ISessionsViewModel is generally first injected in the MainLayout.razor
 }
 
 @code {
-    private bool configFound = false;
-    private bool configError = false;
     private bool navigatedToHome = false;
 
     protected override async Task OnInitializedAsync()
@@ -48,16 +45,16 @@ Note: The ISessionsViewModel is generally first injected in the MainLayout.razor
         {
             var osAccess = new BlazorOSAccess(HttpClient, JSRuntime);
             var internetConnectivity = new InternetConnectivity(JSRuntime);   
+            // Note: See SessionsViewModel.ReadConfigAsync for more details on the initialization process.
+            // It is called in the InitAsync method.
             await ViewModel.InitAsync(osAccess, internetConnectivity);
-            await GetAuthConfigAsync();
-            await GetTenantConfigAsync();
         }
         await base.OnInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (ViewModel!.SessionViewModel is null && configFound)
+        if (ViewModel!.SessionViewModel is null && ViewModel!.ConfigFound)
         {
             try
             {
@@ -75,58 +72,6 @@ Note: The ISessionsViewModel is generally first injected in the MainLayout.razor
         }
 
         await base.OnAfterRenderAsync(firstRender);
-    }
-
-    /// <summary>
-    /// GetAuthConfig retrieves auth configs from the host. 
-    /// It this finds the "adminuserpool" user pool and sets the AuthConfig property 
-    /// in the ViewModel.ClientConfig.AuthConfig.
-    /// </summary>
-    /// <returns></returns>
-    private async Task GetAuthConfigAsync()
-    {
-        ViewModel!.ClientConfig ??= new LzClientConfig();
-        var authconfigurl = Host.TenancyUrl + "config";
-        configError = false;
-        try
-        {
-            var authconfigJson = await HttpClient.GetStringAsync(authconfigurl);
-            var authConfigs = JArray.Parse(authconfigJson);
-            foreach (var authConfig in authConfigs)
-            {
-                if(authConfig["userPoolName"]!.ToString().ToLower() == "employeeuserpool")
-                {
-                    ViewModel!.ClientConfig!.AuthConfig = (JObject)authConfig;
-                    break;
-                }
-            }
-        } catch (Exception ex)
-        {
-            Console.WriteLine("GetAuthConfig Failed. " + ex.Message);
-        }
-        finally
-        {
-
-            configFound = !string.IsNullOrEmpty(ViewModel!.ClientConfig?.AuthConfig["awsRegion"]?.ToString());
-            configError = !configFound;
-        }
-    }
-
-    private async Task GetTenantConfigAsync()
-    {
-        await Task.Delay(0);
-        ViewModel!.ClientConfig ??= new LzClientConfig();
-        var authconfigurl = Host.TenancyUrl + "_content/Tenancy/config.json";
-        try
-        {
-            var tenantConfigJson = await HttpClient.GetStringAsync(authconfigurl);
-            ViewModel!.TenancyConfig = JObject.Parse(tenantConfigJson);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("GetTenantConfig Failed. " + ex.Message);
-        }
-
     }
 
 }

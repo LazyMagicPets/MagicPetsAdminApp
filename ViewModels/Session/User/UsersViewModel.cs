@@ -25,7 +25,7 @@ public class UsersViewModel : LzItemsViewModelAuthNotifications<UserViewModel, U
     }
 
     public override async Task<(bool, string)> ReadAsync(bool forceload = false, StorageAPI storageAPI = StorageAPI.DTO)
-    => await base.ReadAsync(string.Empty, forceload, storageAPI);
+        => await base.ReadAsync(string.Empty, forceload, storageAPI);
 
     public async Task<(bool, string)> CreateAsync()
     {
@@ -34,7 +34,6 @@ public class UsersViewModel : LzItemsViewModelAuthNotifications<UserViewModel, U
         try
         {
             var user = new User();
-            //user.Id = Guid.NewGuid().ToString();
             var userViewModel = UserViewModelFactory!.Create(_sessionViewModel, this, user);
             userViewModel.State = LzItemViewModelState.New;
             CurrentViewModel = userViewModel;

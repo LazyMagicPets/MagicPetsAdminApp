@@ -28,17 +28,19 @@ public static class MauiProgram
         //Platforms.Android.DangerousTrustProvider.Register();
 #endif
 
-        var localHost = true; // flip this to true to hit the local host api
+        var isLocal = false; // flip this to true to hit the local host api
         var cloudHost = "https://admin.lazymagicdev.click/";
         var apiUrl = string.Empty;
         var tenancyUrl = string.Empty;
+        var wsUrl = string.Empty;
 
         if (Debugger.IsAttached)
         {
-            apiUrl = localHost
+            apiUrl = isLocal
                 ? (isAndroid ? "http://localhost:5011" : "https://localhost:5001")
                 : cloudHost;
             tenancyUrl = cloudHost;
+            wsUrl = apiUrl.Replace("https", "wss").Replace("http", "ws") + "ws";    
         }
         else
         {
@@ -49,11 +51,18 @@ public static class MauiProgram
             using var reader = new StreamReader(stream);
             var contents = reader.ReadToEnd();
             apiUrl = tenancyUrl = JObject.Parse(contents)["hosturl"]!.ToString();
+            wsUrl = tenancyUrl.Replace("https", "wss").Replace("http", "ws") + "ws";
         }
 
         builder.Services
         .AddSingleton(sp => new HttpClient())
-        .AddSingleton<ILzHost>(sp => new LzHost(url: apiUrl, tenancyUrl: tenancyUrl, isMAUI: true, isAndroid: isAndroid))
+        .AddSingleton<ILzHost>(sp => new LzHost(
+            url: apiUrl, 
+            tenancyUrl: tenancyUrl, 
+            wsUrl: wsUrl,
+            isMAUI: true, 
+            isAndroid: isAndroid,
+            isLocal: isLocal))
         .AddMauiBlazorWebView();
 
 #if DEBUG

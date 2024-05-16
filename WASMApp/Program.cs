@@ -27,13 +27,20 @@ public partial class Program
 
         var hostEnvironment = builder.HostEnvironment;
         var apiUrl = string.Empty;
-        var tenancyUrl = string.Empty;  
+        var tenancyUrl = string.Empty;
+        //var wsUrl = "wss://2v24ejuki8.execute-api.us-west-2.amazonaws.com/Dev/";
+        var wsUrl = string.Empty;   
         var isLocal = false; // Is the code being served from a local development host?
         switch(hostEnvironment.Environment)
         {
             case "Production":
                 Console.WriteLine("Production environment");
                 apiUrl = tenancyUrl = builder.HostEnvironment.BaseAddress;
+                // Note: Even though we set wsUrl here, it may be overridden
+                // when we call /config. This is necessary because cloudfront 
+                // may be configured with the websocket url as an origin or 
+                // we may choose to call it directly.
+                wsUrl = tenancyUrl.Replace("https", "wss").Replace("http", "ws") + "ws";
                 break;
             default:
 
@@ -45,6 +52,7 @@ public partial class Program
                 apiUrl = apiUrl.EndsWith('/') ? apiUrl : apiUrl + '/';
                 tenancyUrl = urls.Length > 1 ? urls[1] : urls[0];
                 tenancyUrl = tenancyUrl.EndsWith('/') ? tenancyUrl : tenancyUrl + '/';
+                wsUrl = tenancyUrl.Replace("https", "wss").Replace("http", "ws")  + "ws";   
                 Console.WriteLine($"apiUrl: {apiUrl}");
                 Console.WriteLine($"tenancyUrl: {tenancyUrl}");
                 isLocal = true; 
@@ -56,6 +64,7 @@ public partial class Program
             .AddSingleton<ILzHost>(sp => new LzHost(
                 url: apiUrl,  // api url
                 tenancyUrl: tenancyUrl, // tenancy assets url
+                wsUrl: wsUrl, // web socket url
                 isMAUI: false, // sets isWASM to true
                 isAndroid: false,
                 isLocal: isLocal))

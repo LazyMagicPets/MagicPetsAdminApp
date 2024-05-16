@@ -1,6 +1,7 @@
 ﻿namespace ViewModels;
 
 public interface ISessionsViewModel : ILzSessionsViewModelAuthNotifications<ISessionViewModel> {
-    public JObject TenancyConfig { get; set; }
+    public bool ConfigFound { get; set; }
+    public bool ConfigError { get; set; }
 }
 

@@ -58,11 +58,11 @@ self.addEventListener('fetch', async event => {
                     credentials: event.request.credentials,
                     redirect: event.request.redirect
                 });
-
+                console.log(`Fetching tenancy data from ${newUrl}`);
                 return await fetch(modifiedRequest);
             })());
         } else {
-            event.respondWith(fetch(event.request));
+            await event.respondWith(fetch(event.request));
         }
     } catch (error) {
         console.error(error);   

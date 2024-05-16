@@ -1,14 +1,18 @@
 // The purpose of this script is to pull any app specific index.html content into the
-// BlazorUI project. This script is run by the index.html file in the WASMApp and MAUIApp 
+// BlazorUI project. This script is run by the index.html file in the WASMApp and MAUIApp
 // projects. This allows a single source of truth for both the WASMApp and MAUIApp projects.
 
+var bodylinks = [
+    // example:
+    //    { href: '_content/Tenancy/favicon.png', rel: 'icon', type: 'image/png' },
+]; 
 
-links.forEach(function (linkInfo) {
+bodylinks.forEach(function (linkInfo) {
     var link = document.createElement('link');
     Object.keys(linkInfo).forEach(function (key) {
         link.setAttribute(key, linkInfo[key]);
     });
-    document.head.appendChild(link);
+    document.body.appendChild(link);
 });
 
 // Function to dynamically load a script

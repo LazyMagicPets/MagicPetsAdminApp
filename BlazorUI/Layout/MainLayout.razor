@@ -25,7 +25,7 @@
 		<MudNavMenu>
 			@if (ViewModel!.IsInitialized)
 			{
-				<MudNavLink Href="/HomePage"><MudIcon Icon="@Icons.Material.Filled.Home" />Home</MudNavLink>
+				<MudNavLink Href="/HomePage"><MudIcon Icon="@Icons.Material.Filled.Home" />@tenancyName</MudNavLink>
                 @if(ViewModel!.IsSignedIn)
                 {
                     @if(ViewModel!.IsAdmin)
@@ -56,7 +56,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        tenancyName = ViewModel?.TenancyConfig?["tenantName"]?.ToString();
+        tenancyName = ViewModel?.ClientConfig?.TenancyConfig?["tenantName"]?.ToString();
 
         await base.OnAfterRenderAsync(firstRender);
     }

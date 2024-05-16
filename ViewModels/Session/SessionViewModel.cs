@@ -29,8 +29,8 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
         UsersViewModel = usersViewModelFactory.Create(this);
         try
         {
-            var _region = (string?)clientConfig.AuthConfig["awsRegion"] ?? throw new Exception("Cognito AuthConfig.region is null");
-            var regionEndpoint = RegionEndpoint.GetBySystemName(_region);
+            //var _region = (string?)clientConfig.AuthConfig["awsRegion"] ?? throw new Exception("Cognito AuthConfig.region is null");
+            //var regionEndpoint = RegionEndpoint.GetBySystemName(_region);
             authProcess.SetAuthenticator(clientConfig.AuthConfig);
         }
         catch (Exception ex)

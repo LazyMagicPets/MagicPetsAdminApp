@@ -4,7 +4,7 @@ public static class ConfigureViewModels
 {
     public static IServiceCollection AddAppViewModels(this IServiceCollection services)
     {
-        var assembly = MethodBase.GetCurrentMethod()?.DeclaringType?.Assembly;
+        var assembly = typeof(ConfigureViewModels).Assembly;
 
         // Read MethodMap.json - this enables the LzHttpClient class to call the correct API hosting each method. Remember 
         // that a stack may host multiple APIGateways. 
@@ -16,12 +16,9 @@ public static class ConfigureViewModels
 
         services.AddSingleton<ILzClientConfig,LzClientConfig>();    
         services.AddLazyStackAuth();
-        services.AddLazyStackViewModels();
         services.AddSingleton<ISessionsViewModel, SessionsViewModel>();
         services.TryAddSingleton(methodMapWrapper!);
         services.TryAddTransient<IService, Service>();
-        services.TryAddTransient<ILzNotificationSvc, StoreNotificationSvc>();
-
         return services;
     }
 

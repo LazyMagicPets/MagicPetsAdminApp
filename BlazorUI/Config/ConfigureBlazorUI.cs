@@ -10,8 +10,6 @@ public static class ConfigureBlazorUI
         // Load in order of override. Messages in the last loaded file
         // will override messages in the first loaded file.
         messages
-            .AddLazyStackComponents()
-            .AddLazyStackViewModels()
             .AddLazyStackAuth()
             .AddAppViewModels()
             .AddApp()
@@ -21,7 +19,6 @@ public static class ConfigureBlazorUI
             .AddMudServices()
             .AddSingleton<ILzMessages>(messages)
             .AddAppViewModels()
-            .AddLazyStackComponents()
             .AddLazyStackAuthCognito();
     }
 

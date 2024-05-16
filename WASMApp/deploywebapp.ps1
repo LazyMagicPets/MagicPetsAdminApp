@@ -19,7 +19,8 @@ if(-not (Test-Path $filePath))
 
 $config = Get-Content -Path $filePath | ConvertFrom-Yaml
 $SystemGuid = $config.SystemGuid
+$Profile = $config.Profile
 
 dotnet publish -p:Publishprofile=FolderProfile
 
-aws s3 cp .\bin\Release\net8.0\publish\wwwroot s3://webapp-admin-$SystemGuid/wwwroot --recursive --profile lzm-dev
+aws s3 cp .\bin\Release\net8.0\publish\wwwroot s3://webapp-admin-$SystemGuid/wwwroot --recursive --profile $Profile
