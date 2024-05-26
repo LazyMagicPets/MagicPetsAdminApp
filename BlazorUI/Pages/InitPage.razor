@@ -41,13 +41,16 @@ Note: The ISessionsViewModel is generally first injected in the MainLayout.razor
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("InitPage");
         if (!ViewModel!.IsInitialized)
         {
             var osAccess = new BlazorOSAccess(HttpClient, JSRuntime);
             var internetConnectivity = new InternetConnectivity(JSRuntime);   
-            // Note: See SessionsViewModel.ReadConfigAsync for more details on the initialization process.
-            // It is called in the InitAsync method.
-            await ViewModel.InitAsync(osAccess, internetConnectivity);
+            Console.WriteLine("About to new BaseAppJS");
+            var baseAppJS = new BaseAppJS(JSRuntime, NavigationManager);
+            await baseAppJS.Initialize();
+            Console.WriteLine("Back from new BaseAppJS");
+            await ViewModel.InitAsync(osAccess, internetConnectivity, baseAppJS);
         }
         await base.OnInitializedAsync();
     }

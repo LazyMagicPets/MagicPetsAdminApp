@@ -11,6 +11,7 @@
     <base href="/" />
     <link href="WASMApp.styles.css" rel="stylesheet" />
     <link href="_content/BlazorUI/manifest.json" rel="manifest" />
+    <!--<link href="manifest.json" rel="manifest" />-->
     <link href="_content/BlazorUI/css/app.css" rel="stylesheet" />
     <!-- Do not load application component specific styles inline. Instead put them
         in the indexhead.js script. -->
@@ -35,10 +36,9 @@
         in the indexbody.js script. -->
     <script src="_content/BlazorUI/indexbody.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
-    <script>
-        navigator.serviceWorker.register('service-worker.js');
-    </script>
+    <script src="indexinit.js"></script>
 
 </body>
+
 
 </html>

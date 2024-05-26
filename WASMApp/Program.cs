@@ -34,7 +34,7 @@ public partial class Program
         switch(hostEnvironment.Environment)
         {
             case "Production":
-                Console.WriteLine("Production environment");
+                Console.WriteLine("Loaded from CloudFront");
                 apiUrl = tenancyUrl = builder.HostEnvironment.BaseAddress;
                 // Note: Even though we set wsUrl here, it may be overridden
                 // when we call /config. This is necessary because cloudfront 
@@ -44,7 +44,7 @@ public partial class Program
                 break;
             default:
 
-                Console.WriteLine("Development environment");
+                Console.WriteLine("Development environment, loaded from localhost");
                 var envVar = hostEnvironment.Environment;
                 // The variable is a list of urls, separated by a comma.
                 var urls = envVar.Split(',');

@@ -32,10 +32,23 @@ public class SessionsViewModel : LzSessionsViewModelAuthNotifications<ISessionVi
 
     public bool ConfigFound { get; set; } = false;
     public bool ConfigError { get; set; } = false;
+    public IBaseAppJS? BaseAppJS { get; set; }
 
+    public override Task InitAsync(IOSAccess osAccess, IInternetConnectivitySvc internetConnectivitySvc)
+    {
+        throw new Exception("Use InitAsync(osAccess, internetConnectivtySvc, baseAppJS) instead");
+    }
+    // Called from init.razor OnInitializedAsync()
+    public async Task InitAsync(IOSAccess osAccess, IInternetConnectivitySvc internetConnectivitySvc, IBaseAppJS baseAppJS)
+    {
+        BaseAppJS = baseAppJS ?? throw new ArgumentNullException(nameof(baseAppJS));
+        await base.InitAsync(
+            osAccess: osAccess ?? throw new ArgumentNullException(nameof(osAccess)),
+            internetConnectivitySvc ?? throw new ArgumentNullException(nameof(internetConnectivitySvc)));
+    }
     public override ISessionViewModel CreateSessionViewModel()
     {
-        return _sessionViewModelFactory.Create(OSAccess, ClientConfig!, InternetConnectivity!);
+        return _sessionViewModelFactory.Create(OSAccess!, ClientConfig!, InternetConnectivity!);
     }
 
     // ReadConfigAsync is called from InitAsync() just prior to the IsInitialized being set to true.

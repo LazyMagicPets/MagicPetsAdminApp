@@ -1,5 +1,6 @@
 ﻿@namespace BlazorUI
 @page "/HomePage"
+@inject NavigationManager NavigationManager
 @*
     CoreComponentBaseAssignViewModel<T> : LzReactiveComponentBaseAssignViewModel<T>
     LzReactiveComponentBaseAssignViewModel<T> : ComponentBase, IViewFor<T>, INotifyPropertyChanged, ICanActivate, IDisposable
@@ -21,35 +22,55 @@
 *@
 @inject ISessionsViewModel SessionsViewModel
 
-<MudPaper Class="d-flex align-start flex-grow-1">
-    <MudCard Outlined="true" Class="flex-initial" Width="45%" Elevation="0">
-        <MudCardContent Class="d-flex flex-column">
-            @if (ViewModel!.IsSignedIn)
-            {
-                <h1>Welcome, @ViewModel!.AuthProcess?.Login</h1>
-                <ClientInfoCard ViewModel="@ViewModel!.CallerInfo" />
-            }
-            else
-            {
-                <h1>Hi there, lets get connected!</h1>
-            }
-            <LzAuth ViewModel="@ViewModel!.AuthProcess" />
-        </MudCardContent>
-        <MudCardActions Class="d-flex align-content-start flex-wrap flex-grow-1 gap-1">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnWSConnect())">WebSocket Connect</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnSendMessage())">WebSocket Message</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnWSDisconnect())">WebSocket Disconnect</MudButton>
-        </MudCardActions>
-    </MudCard>
-</MudPaper>
+@if(ViewModel is null)
+{
+    <RedirectToHome />
+}
+else 
+{
+    <MudPaper Class="d-flex align-start flex-grow-1">
+        <MudCard Outlined="true" Class="flex-initial" Width="45%" Elevation="0">
+            <MudCardContent Class="d-flex flex-column">
+                @if (ViewModel!.IsSignedIn)
+                {
+                    <h1>Welcome, @ViewModel!.AuthProcess?.Login</h1>
+                    <ClientInfoCard ViewModel="@ViewModel!.CallerInfo" />
+                }
+                else
+                {
+                    <h1>Hi there, lets get connected!</h1>
+                }
+                <LzAuth ViewModel="@ViewModel!.AuthProcess" />
+            </MudCardContent>
+            <MudCardActions Class="d-flex align-content-start flex-wrap flex-grow-1 gap-1">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnWSConnect())">WebSocket Connect</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnSendMessage())">WebSocket Message</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(async () => await OnWSDisconnect())">WebSocket Disconnect</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudPaper>
+}
 
 @code {
+
+    protected override bool ShouldRender()
+    {
+        return ViewModel != null;
+    }
+
     protected override async Task OnInitializedAsync()
     {
-
-        ViewModel = SessionsViewModel.SessionViewModel;
+        Console.WriteLine("HomePage: OnInitializedAsync");
+        ViewModel = SessionsViewModel!.SessionViewModel;
+        if (ViewModel is null)
+        {
+            Console.WriteLine("HomePage: ViewModel is null");
+            NavigationManager.NavigateTo("/");
+            return;
+        }
         await base.OnInitializedAsync();
     }
+
     private async Task OnWSConnect() 
     {
         if (ViewModel?.NotificationsSvc is null) return;

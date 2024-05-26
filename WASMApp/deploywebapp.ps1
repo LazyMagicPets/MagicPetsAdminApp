@@ -21,6 +21,8 @@ $config = Get-Content -Path $filePath | ConvertFrom-Yaml
 $SystemGuid = $config.SystemGuid
 $Profile = $config.Profile
 
+dotnet build -c Release --no-incremental
 dotnet publish -p:Publishprofile=FolderProfile
+# dotnet publish -c Release
 
 aws s3 cp .\bin\Release\net8.0\publish\wwwroot s3://webapp-admin-$SystemGuid/wwwroot --recursive --profile $Profile

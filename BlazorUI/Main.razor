@@ -1,6 +1,7 @@
 ﻿@namespace BlazorUI
 @inject IJSRuntime JSRuntime
 @inject ILzHost Host
+@inject NavigationManager NavigationManager
 <Router AppAssembly="@typeof(Main).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
@@ -9,7 +10,8 @@
     <NotFound>
         <PageTitle>Not found</PageTitle>
         <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <RedirectToHome />
+            @* <p role="alert">Sorry, there's nothing at this address: @NavigationManager.Uri</p> *@
         </LayoutView>
     </NotFound>
 </Router>

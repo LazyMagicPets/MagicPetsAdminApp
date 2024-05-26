@@ -1,7 +1,7 @@
 ﻿@namespace BlazorUI
 @inherits LzLayoutComponentBaseInjectViewModel<ISessionsViewModel>
-@inject IJSRuntime JSRuntime
-@inject ILzHost Host
+@* @inject IJSRuntime JSRuntime
+@inject ILzHost Host *@
 @*
     This component instantiates the ISessionsViewModel singleton.
     However, Maui Hybrid and WASM apps do not setup the DI context exactly the same way. 
@@ -38,6 +38,7 @@
 		</MudNavMenu>
 	</MudDrawer>
 	<MudMainContent Class="d-flex align-start">
+
         @Body
 	</MudMainContent>
 </MudLayout>
@@ -51,6 +52,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("MainLayout");
         await base.OnInitializedAsync();
     }
 
