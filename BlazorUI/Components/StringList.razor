@@ -1,0 +1,136 @@
+@namespace BlazorUI
+@using System.Collections.Generic
+
+<MudCard Class="ma-4">
+    <MudCardHeader>
+        <MudText Typo="Typo.h5">@Title</MudText>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Items="@Items" Dense="@Dense" Hover="@Hover" Filter="new Func<string, bool>(FilterFunc)">
+            <ToolBarContent>
+                <MudTextField @bind-Value="newItemValue"
+                              Placeholder="Add new item"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Add"
+                              OnAdornmentClick="@AddItem"
+                              OnKeyDown="@(async (e) => { if (e.Key == "Enter") await AddItem(); })"
+                              Class="mt-0 mr-2" />
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString"
+                              Placeholder="Search"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium"
+                              Class="mt-0" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<string, object>(x => x)">Item</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="text-align: right">Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Item">
+                    @if (editIndex == context.GetHashCode())
+                    {
+                        <MudTextField @bind-Value="editValue"
+                                      Immediate="true"
+                                      Variant="Variant.Text"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Save"
+                                      OnAdornmentClick="@(() => SaveEdit(context))"
+                                      OnKeyDown="@(async (e) => { if (e.Key == "Enter") await SaveEdit(context); })" />
+                    }
+                    else
+                    {
+                        @context
+                    }
+                </MudTd>
+                <MudTd DataLabel="Actions" Style="text-align: right">
+                    @if (editIndex != context.GetHashCode())
+                    {
+                        <MudIconButton Size="@Size.Small"
+                                       Icon="@Icons.Material.Filled.Edit"
+                                       OnClick="@(() => StartEdit(context))" />
+                        <MudIconButton Size="@Size.Small"
+                                       Icon="@Icons.Material.Filled.Delete"
+                                       OnClick="@(() => DeleteItem(context))" />
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "List Manager";
+
+    [Parameter]
+    public List<string> Items { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<string>> ItemsChanged { get; set; }
+
+    [Parameter]
+    public bool Dense { get; set; } = false;
+
+    [Parameter]
+    public bool Hover { get; set; } = true;
+
+    private string searchString = "";
+    private string newItemValue = "";
+    private string editValue = "";
+    private int editIndex = -1;
+
+    private bool FilterFunc(string item)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        return item.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task AddItem()
+    {
+        if (!string.IsNullOrWhiteSpace(newItemValue))
+        {
+            var newList = Items.ToList();
+            newList.Add(newItemValue);
+            await ItemsChanged.InvokeAsync(newList);
+            newItemValue = "";
+        }
+    }
+
+    private void StartEdit(string item)
+    {
+        editIndex = item.GetHashCode();
+        editValue = item;
+    }
+
+    private async Task SaveEdit(string originalItem)
+    {
+        if (editIndex >= 0 && !string.IsNullOrWhiteSpace(editValue))
+        {
+            var newList = Items.ToList();
+            var index = newList.IndexOf(originalItem);
+            if (index >= 0)
+            {
+                newList[index] = editValue;
+                await ItemsChanged.InvokeAsync(newList);
+            }
+            editIndex = -1;
+            editValue = "";
+        }
+    }
+
+    private async Task DeleteItem(string item)
+    {
+        var newList = Items.ToList();
+        newList.Remove(item);
+        await ItemsChanged.InvokeAsync(newList);
+    }
+}

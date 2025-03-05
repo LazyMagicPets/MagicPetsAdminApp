@@ -1,6 +1,13 @@
+
+using LazyMagic.Client.ViewModels;
+using ReactiveUI.Blazor;
+
+
 namespace WASMApp;
 public partial class Program
 {
+    private static JObject? _appConfig;
+
     private static async Task Main(string[] args)
     {
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -9,68 +16,131 @@ public partial class Program
         builder.RootComponents.Add<HeadOutlet>("head::after");
 
         // We use the launchSettings.json profile ASPNETCORE_ENVIRONMENT environment variable
-        // to determine the host addresses for the API host and Tenancy host.
+        // to determine the host addresses for the API host and Assets host.
         //
         // Examples:
         // Production: "ASPNETCORE_ENVIRONMENT": "Production" 
-        //  The API and Tenancy host are the same and are the base address of the cloudfront distribution
+        //  The API and Assets host are the same and are the base address of the cloudfront distribution
         //  the app is loaded from.
         //
         // Debug against LocalHost API:
-        //  "ASPNETCORE_ENVIRONMENT": "https://localhost:5001,https://admin.lazymagicdev.click"
-        //  The first url is the API host, the second is the tenancy host.
-        //
-        // Debug against CloundFront deployment:
-        //   "ASPNETCORE_ENVIRONMENT": "https://admin.lazymagicdev.click"
-        //   The url is the API host and the tenancy host.
+        //  "ASPNETCORE_ENVIRONMENT": "Localhost"
+        //  useLocalhostApi will be true else false
 
 
         var hostEnvironment = builder.HostEnvironment;
-        var apiUrl = string.Empty;
-        var tenancyUrl = string.Empty;
-        //var wsUrl = "wss://2v24ejuki8.execute-api.us-west-2.amazonaws.com/Dev/";
-        var wsUrl = string.Empty;   
         var isLocal = false; // Is the code being served from a local development host?
-        switch(hostEnvironment.Environment)
+        var useLocalhostApi = false;
+        switch (hostEnvironment.Environment)
         {
             case "Production":
                 Console.WriteLine("Loaded from CloudFront");
-                apiUrl = tenancyUrl = builder.HostEnvironment.BaseAddress;
-                // Note: Even though we set wsUrl here, it may be overridden
-                // when we call /config. This is necessary because cloudfront 
-                // may be configured with the websocket url as an origin or 
-                // we may choose to call it directly.
-                wsUrl = tenancyUrl.Replace("https", "wss").Replace("http", "ws") + "ws";
                 break;
             default:
-
-                Console.WriteLine("Development environment, loaded from localhost");
+                Console.WriteLine("Development environment");
+                isLocal = true;
                 var envVar = hostEnvironment.Environment;
-                // The variable is a list of urls, separated by a comma.
-                var urls = envVar.Split(',');
-                apiUrl = urls[0];
-                apiUrl = apiUrl.EndsWith('/') ? apiUrl : apiUrl + '/';
-                tenancyUrl = urls.Length > 1 ? urls[1] : urls[0];
-                tenancyUrl = tenancyUrl.EndsWith('/') ? tenancyUrl : tenancyUrl + '/';
-                wsUrl = tenancyUrl.Replace("https", "wss").Replace("http", "ws")  + "ws";   
-                Console.WriteLine($"apiUrl: {apiUrl}");
-                Console.WriteLine($"tenancyUrl: {tenancyUrl}");
-                isLocal = true; 
+                if (envVar.Contains("Localhost"))
+                    useLocalhostApi = true;
                 break;
         }
 
-        builder.Services
-            .AddSingleton(sp => new HttpClient { BaseAddress = new Uri(apiUrl) })
-            .AddSingleton<ILzHost>(sp => new LzHost(
-                url: apiUrl,  // api url
-                tenancyUrl: tenancyUrl, // tenancy assets url
-                wsUrl: wsUrl, // web socket url
-                isMAUI: false, // sets isWASM to true
-                isAndroid: false,
-                isLocal: isLocal))
-            .AddBlazorUI(); // See Config/ConfigureViewModels.cs
-            
+        // Configure logging
+        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Debug); // Set minimum log level
+        builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);  // Only show Warning and above for ASP.NET Core
+        builder.Logging.AddFilter("MudBlazor", LogLevel.Warning);  // Only show Warning and above for MudBlazor
 
-        await builder.Build().RunAsync();
+        builder.Services
+        
+        .AddSingleton(sp => new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) })
+        .AddSingleton<IStaticAssets>(sp => new BlazorStaticAssets(
+            sp.GetRequiredService<ILoggerFactory>(), 
+            new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) }))
+        .AddSingleton<ILzMessages, LzMessages>()
+        .AddSingleton<ILzClientConfig, LzClientConfig>()
+        .AddSingleton<BlazorInternetConnectivity>()
+
+        .AddSingleton<IBlazorInternetConnectivity>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
+        .AddSingleton<IInternetConnectivitySvc>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
+        .AddSingleton<ILzHost>(sp => new LzHost(
+            appPath: (string)_appConfig!["appPath"]!, // app path
+            appUrl: (string)_appConfig!["appUrl"]!, // app url  
+            androidAppUrl: "", // android app url not used in WASM
+            remoteApiUrl: (string)_appConfig!["remoteApiUrl"]!,  // api url
+            localApiUrl: (string)_appConfig!["localApiUrl"]!, // local api url
+            assetsUrl: (string)_appConfig!["assetsUrl"]!, // tenancy assets url
+            isMAUI: false, // sets isWASM to true
+            isAndroid: false,
+            isLocal: isLocal,
+            useLocalhostApi: useLocalhostApi))
+        .AddSingleton<IOSAccess, BlazorOSAccess>()
+        .AddSingleton<IBaseAppJS, BaseAppJS>()
+        .AddBlazorUI(); // See Config/ConfigureViewModels.cs
+
+
+        var host = builder.Build();
+
+
+        // Wait for the page to fully load to finish up the Blazor app configuration
+        var jsRuntime = host.Services.GetRequiredService<IJSRuntime>();
+        await WaitForPageLoad(jsRuntime);
+
+        // Now we can retrieve the app config information loaded with the page
+        _appConfig = await GetAppConfigAsync(jsRuntime);
+        if (_appConfig == null)
+        {
+            Console.WriteLine("Error loading app config. Exiting.");
+            return;
+        }
+
+        await host.RunAsync();
     }
+
+    private static async Task LoadStaticAssets(IJSRuntime jsRuntime)
+    {
+        await jsRuntime.InvokeVoidAsync("loadStaticAssets");
+    }
+
+    private static async Task<JObject> GetAppConfigAsync(IJSRuntime jsRuntime)
+    {
+        try
+        {
+            // Use IJSRuntime to evaluate JavaScript and get the JSON string
+            string jsonString = await jsRuntime.InvokeAsync<string>(
+                "eval",
+                "JSON.stringify(window.appConfig)"
+            );
+
+            // Parse the JSON string to a JObject
+            return JObject.Parse(jsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching app config: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static async Task WaitForPageLoad(IJSRuntime jsRuntime)
+    {
+        const int maxWaitTimeMs = 10000; // Maximum wait time of 10 seconds
+        const int checkIntervalMs = 100; // Check every 100ms
+
+        var totalWaitTime = 0;
+        while (totalWaitTime < maxWaitTimeMs)
+        {
+            var isLoaded = await jsRuntime.InvokeAsync<bool>("checkIfLoaded");
+            if (isLoaded)
+            {
+                Console.WriteLine("Page fully loaded.");
+                return;
+            }
+
+            await Task.Delay(checkIntervalMs);
+            totalWaitTime += checkIntervalMs;
+        }
+
+        Console.WriteLine("Warning: Page load timeout reached.");
+    }
+
 }

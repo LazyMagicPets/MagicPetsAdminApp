@@ -1,0 +1,180 @@
+﻿@namespace BlazorUI
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components.Web
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.caption">Assets</MudText>
+    <MudStack Spacing="2">
+        <!-- The MudTable displaying the ASSETs -->
+        <MudTable Items="@Assets">
+            <HeaderContent>
+                <MudTh>Path</MudTh>
+                <MudTh>Asset</MudTh>
+                @if (editAllowed)
+                {
+                    <MudTh>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@AddNew" />
+                    </MudTh>
+                }
+
+            </HeaderContent>
+            <RowTemplate>
+                @if (editingAsset != null && editingAsset == context)
+                {
+                    <!-- Inline edit/add mode -->
+                    <MudTd>
+                        <MudTextField @bind-Value="editingCopy.Path" @ref="pathFieldRef" />
+                    </MudTd>
+                    <MudTd>
+                        <MudTextField @bind-Value="editingCopy.Name" />
+                    </MudTd>
+                    @if (editAllowed)
+                    {
+                        <MudTd>
+                            <MudButton Color="Color.Primary" OnClick="@(() => SaveEdit(context))" @ref="saveButtonRef">
+                                Save
+                            </MudButton>
+                            <MudButton Color="Color.Secondary" OnClick="@CancelEdit">Cancel</MudButton>
+                        </MudTd>
+                    }
+                }
+                else
+                {
+                    <!-- Read-only row -->
+                    <MudTd>@context.Path</MudTd>
+                    <MudTd>@context.Name</MudTd>
+                    @if (editAllowed) 
+                    {
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => BeginEdit(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteAsset(context))" />
+                        </MudTd>
+                    }
+                }
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public ICollection<Asset> Assets { get; set; }
+    private bool editAllowed = false; // Disable editing until we move subtenant management out of the powershell scripts
+    private Asset editingAsset;         // The ASSET being edited (or added)
+    private Asset editingCopy = new(); // A copy to hold temporary changes
+
+    // References for setting focus.
+    private MudTextField<string> pathFieldRef;
+    private MudButton saveButtonRef;
+
+    // Flag to focus the Path field after adding a new row.
+    private bool isNewlyAdded = false;
+
+    /// <summary>
+    /// Puts the selected ASSET row in edit mode.
+    /// </summary>
+    private void BeginEdit(Asset asset)
+    {
+        editingAsset = asset;
+        editingCopy = new Asset
+        {
+            Path = asset.Path,
+            Suffix = asset.Suffix
+        };
+    }
+
+    /// <summary>
+    /// Saves the changes made during edit or add.
+    /// </summary>
+    private void SaveEdit(Asset asset)
+    {
+        asset.Path = editingCopy.Path;
+        asset.Suffix = editingCopy.Suffix;
+        editingAsset = null;
+    }
+
+    /// <summary>
+    /// Cancels the edit/add operation.
+    /// If canceling a new ASSET (with empty values), it removes it from the collection.
+    /// </summary>
+    private void CancelEdit()
+    {
+        Assets.Remove(editingAsset);
+        editingAsset = null;
+    }
+
+    /// <summary>
+    /// Deletes the specified ASSET from the collection.
+    /// </summary>
+    private void DeleteAsset(Asset asset)
+    {
+        Assets.Remove(asset);
+    }
+
+    /// <summary>
+    /// Adds a new ASSET row and immediately puts it in inline edit mode.
+    /// </summary>
+    private void AddNew()
+    {
+        var newAsset = new Asset() 
+        {
+                Path = "",
+                Suffix = "{ts}"
+        };
+        Assets.Add(newAsset);
+        isNewlyAdded = true;
+        BeginEdit(newAsset);
+    }
+
+    /// <summary>
+    /// After rendering, if a new row was added, focus the Path field.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isNewlyAdded && pathFieldRef != null)
+        {
+            await pathFieldRef.FocusAsync();
+            isNewlyAdded = false;
+        }
+    }
+
+    /// <summary>
+    /// When the user presses a key in the AssetName field, if it's Enter, move focus to the Save button.
+    /// </summary>
+    private async Task HandleAssetNameKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await FocusSaveButton();
+        }
+    }
+
+    /// <summary>
+    /// When the AssetName field loses focus (e.g. via tabbing out), move focus to the Save button.
+    /// </summary>
+    private async Task HandleAssetNameBlur(FocusEventArgs args)
+    {
+        await FocusSaveButton();
+    }
+
+    /// <summary>
+    /// Moves focus to the Save button if available.
+    /// </summary>
+    private async Task FocusSaveButton()
+    {
+        if (saveButtonRef != null)
+        {
+            await saveButtonRef.FocusAsync();
+        }
+    }
+
+    private async Task OnAssetNameKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await FocusSaveButton();
+        }
+        // For other keys, nothing extra is needed.
+    }
+
+}

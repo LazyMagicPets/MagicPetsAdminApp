@@ -1,0 +1,109 @@
+@namespace BlazorUI
+@page "/SubtenantsPage"
+@inherits LzComponentBasePassViewModel<SubtenantsViewModel>
+@inject ISessionsViewModel SessionsViewModel
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snakbar
+
+
+<h3>SubtenantsPage</h3>
+@if (ViewModel!.IsLoading)
+{
+    <Busy />
+}
+else
+{
+    <MudCard>
+        <!-- Removed MudCardHeader as the add button is now in the table header -->
+        <MudCardContent>
+            <MudTable T="SubtenantModel"
+            Items="@ViewModel.ViewModels.Values.Select(x => x.Data)">
+                <HeaderContent>
+                    <MudTh>SubtenantKey</MudTh>
+                    <MudTh>Name</MudTh>
+                    @if (editAllowed) 
+                    {
+                        <MudTh>
+                            <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddSubtenant" />
+                        </MudTh>
+                    } 
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="SubtenantKey">@context.Id</MudTd>
+                    @if(editAllowed) 
+                    {
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => EditSubtenant(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Primary" OnClick="@(() => DeleteSubtenant(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.AutoFixHigh" Color="Color.Primary" OnClick="@(() => SeedPetsAsync(context))" />"
+                        </MudTd>
+                    } else {
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.ReadMore" Color="Color.Primary" OnClick="@(() => EditSubtenant(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.AutoFixHigh" Color="Color.Primary" OnClick="@(() => SeedPetsAsync(context))" />"
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="SubtenantsReloadAsync">Reload</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+    [Inject] ISnackbar? Snackbar { get; set; }
+    private bool editAllowed = false; // Disable editing until we move subtenant management out of the powershell scripts
+    private MudTable<SubtenantModel> table = new MudTable<SubtenantModel>();
+    private string testString = string.Empty;
+
+    protected override async void OnInitialized()
+    {
+        ViewModel = SessionsViewModel!.SessionViewModel!.SubtenantsViewModel;
+        await SubtenantsReloadAsync();
+        base.OnInitialized();
+    }
+
+    private void AddSubtenant()
+    {
+        NavigationManager.NavigateTo("SubtenantEditPage");
+    }
+
+    private void EditSubtenant(SubtenantModel subtenant)
+    {
+        var viewModel = ViewModel!.CurrentViewModel = ViewModel!.EditViewModel = ViewModel.ViewModels[subtenant.Id];
+        NavigationManager.NavigateTo("SubtenantEditPage");
+    }
+
+    private async Task DeleteSubtenant(SubtenantModel subtenant)
+    {
+        var viewModel = ViewModel!.ViewModels[subtenant.Id];
+        var (success, msg) = await viewModel.DeleteAsync();
+        if (!success)
+        {
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+        }
+    }
+    private async Task SubtenantsReloadAsync()
+    {
+
+        var (success, msg) = await ViewModel!.ReadAsync();
+        if (!success)
+        {
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+        }
+    }
+    private async Task SeedPetsAsync(SubtenantModel subtenant)
+    {
+        var id = subtenant.Id;
+        try {
+            await SessionsViewModel!.SessionViewModel!.Admin.SeedPetsAsync(id,5); 
+            Snackbar!.Add("Seedpets Succeded", Severity.Success);   
+        }
+        catch (Exception e)
+        {
+            Snackbar!.Add("Seedpets Failed", Severity.Error);
+        }
+    }
+}

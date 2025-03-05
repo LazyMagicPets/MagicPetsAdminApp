@@ -1,13 +1,17 @@
-﻿using LazyStack.Client.Base;
+﻿using LazyMagic.Client.Base;
 using BlazorUI;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using Newtonsoft.Json.Linq;
-
+using LazyMagic.Blazor;
+using ViewModels;
+using System.Text.RegularExpressions;
 namespace MAUIApp;
 
 public static class MauiProgram
 {
+    private static JObject? _appConfig;
+
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -27,50 +31,64 @@ public static class MauiProgram
         //Platforms.Android.DangerousAndroidMessageHandlerEmitter.Register();
         //Platforms.Android.DangerousTrustProvider.Register();
 #endif
+        var isLocal = Debugger.IsAttached;
+        var configText = BlazorUI.AssemblyContent.ReadEmbeddedResource("wwwroot/appConfig.js");
+        _appConfig = ExtractDataFromJs(configText);
 
-        var isLocal = false; // flip this to true to hit the local host api
-        var cloudHost = "https://admin.lazymagicdev.click/";
-        var apiUrl = string.Empty;
-        var tenancyUrl = string.Empty;
-        var wsUrl = string.Empty;
 
-        if (Debugger.IsAttached)
-        {
-            apiUrl = isLocal
-                ? (isAndroid ? "http://localhost:5011" : "https://localhost:5001")
-                : cloudHost;
-            tenancyUrl = cloudHost;
-            wsUrl = apiUrl.Replace("https", "wss").Replace("http", "ws") + "ws";    
-        }
-        else
-        {
-            // The CI/CD pipeline is responsible for writing the hosturl.json file to the app package
-            // Resources/Raw folder. We don't put this file in wwwroot/Tenancy because recoruces in
-            // that folder so they may be retrieved from the host url instead of deployed with the app.
-            using var stream = FileSystem.OpenAppPackageFileAsync("hosturl.json").Result;
-            using var reader = new StreamReader(stream);
-            var contents = reader.ReadToEnd();
-            apiUrl = tenancyUrl = JObject.Parse(contents)["hosturl"]!.ToString();
-            wsUrl = tenancyUrl.Replace("https", "wss").Replace("http", "ws") + "ws";
-        }
+        // Configure logging
+        builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Debug); // Set minimum log level
+        builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);  // Only show Warning and above for ASP.NET Core
+        builder.Logging.AddFilter("MudBlazor", LogLevel.Warning);  // Only show Warning and above for MudBlazor
 
         builder.Services
-        .AddSingleton(sp => new HttpClient())
-        .AddSingleton<ILzHost>(sp => new LzHost(
-            url: apiUrl, 
-            tenancyUrl: tenancyUrl, 
-            wsUrl: wsUrl,
-            isMAUI: true, 
-            isAndroid: isAndroid,
-            isLocal: isLocal))
-        .AddMauiBlazorWebView();
+            .AddSingleton<ILzMessages, LzMessages>()
+            .AddSingleton<ILzClientConfig, LzClientConfig>()
+            .AddSingleton(sp => new HttpClient())
+            .AddSingleton<IStaticAssets>(sp => new BlazorStaticAssets(
+                sp.GetRequiredService<ILoggerFactory>(),
+                new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) }))
+            .AddSingleton<BlazorInternetConnectivity>()
+            .AddSingleton<IBlazorInternetConnectivity>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
+            .AddSingleton<IInternetConnectivitySvc>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
+            .AddSingleton<ILzHost>(sp => new LzHost(
+                appPath: (string)_appConfig!["appPath"]!, // app path
+                appUrl: (string)_appConfig!["appUrl"]!, // app url  
+                androidAppUrl: (string)_appConfig!["androidAppUrl"]!, // android app url 
+                remoteApiUrl: (string)_appConfig!["remoteApiUrl"]!,  // api url
+                localApiUrl: (string)_appConfig!["localApiUrl"]!, // local api url
+                assetsUrl: (string)_appConfig!["assetsUrl"]!, // tenancy assets url
+                isMAUI: true,
+                isAndroid: isAndroid,
+                isLocal: isLocal,
+                useLocalhostApi: (bool)_appConfig!["useLocalHostApi"]!))
+            .AddSingleton<IOSAccess, BlazorOSAccess>()
+            .AddSingleton<IBaseAppJS, BaseAppJS>()
+            .AddMauiBlazorWebView();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
-        builder.Logging.AddDebug();
+		builder.Logging.AddDebug();
 #endif
         builder.Services
         .AddBlazorUI();
         return builder.Build();
+    }
+
+    private static JObject? ExtractDataFromJs(string content)
+    {
+        string pattern = @"\{[^{}]*\}";
+        Match match = Regex.Match(content, pattern);
+
+        if (match.Success)
+        {
+            string jsonText = match.Value;
+            JObject jsonObject = JObject.Parse(jsonText);
+            return jsonObject;
+        }
+        else
+        {
+            return null;
+        }
     }
 }

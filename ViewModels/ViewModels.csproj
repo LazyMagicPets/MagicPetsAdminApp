@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<!--<SourceEmbedConfigFolder>..\..\Store.Config\ClientConfigToEmbed</SourceEmbedConfigFolder>-->
@@ -9,16 +9,24 @@
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 	</PropertyGroup>
 
-	<!--<Import Project="..\..\LazyStackClient\LazyStack.Config\EmbedConfig.xml" />-->
-
+	<!--<Import Project="..\..\LazyMagicClient\LazyMagic.Config\EmbedConfig.xml" />-->
+	
 	<ItemGroup>
+		<TrimmerRootAssembly Include="LazyMagic.Shared" />
+	</ItemGroup>	
+	
+	<ItemGroup>
+		<PackageReference Include="LazyMagic.Client.Auth.Cognito" />
+		<PackageReference Include="LazyMagic.Client.FactoryGenerator" PrivateAssets="all" OutputItemType="Analyzer" />
+		<PackageReference Include="LazyMagic.Client.ViewModels.Auth.Notifications" />
+		<PackageReference Include="LazyMagic.Shared" />
+
 		<PackageReference Include="ReactiveUI.Fody" />
 		<PackageReference Include="ReactiveUI" />
-		<PackageReference Include="LazyStack.Client.FactoryGenerator" PrivateAssets="all" />
-		<PackageReference Include="LazyStack.Client.Auth.Cognito" />
-		<PackageReference Include="LazyStack.Client.ViewModels.Auth.Notifications" />
-		<PackageReference Include="LazyStack.Shared" />
-		<PackageReference Include="LZMServiceClientSDK" />
+
+		<PackageReference Include="Splat.Microsoft.Extensions.Logging" />
+		<PackageReference Include="AdminApi" />
+
 	</ItemGroup>
 
 </Project>

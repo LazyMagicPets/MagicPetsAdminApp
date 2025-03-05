@@ -1,157 +1,214 @@
-// Caution! Be sure you understand the caveats before publishing an application with
-// offline support. See https://aka.ms/blazor-offline-considerations
-// V12
+/*
+This service-worker is used when the app is running from a remote server.
+In addition to the minimum set of service-worker features, this implementation 
+includes support for:
+- Integration with our static asset caching module.
+- Redirection to the base URL when the app is navigated to a different URL.
+- Graceful application updates.
+*/
+import * as staticContentModule from './_content/BlazorUI/staticContentModule.js'; // staticAssets
+import * as appConfigFile from './_content/BlazorUI/appConfig.js'; // appConfig
+const appPrefix = appConfigFile.appConfig.appPath;
 
-const TEMP_CACHE_NAME = `temp-cache`;
-const CACHE_NAME = `cache`;
-const TEMP_TENANCY_CACHE_NAME = 'temp-tenancy-cache';
-const TENANCY_CACHE_NAME = 'tenancy-cache';
+const swversion = 51;
+console.log("service-worker.js loading version:" + swversion);
+
 let version = '';
-let setsversion = '';
-let setsCmpversion = '';
 
-
-try {
-    self.importScripts('./service-worker-assets.js'); // assigns self.assetsManifest.assets 
-} catch (error) {
-    console.error('Error importing scripts:', error);
-}
-
-const offlineAssetsInclude = [/\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.svg$/];
-//const offlineAssetsExclude = [/^service-worker\.js$/, /GoogleTag\.js$/]; // Excluding GoogleTag.js because ad blockers block it and this will cause the caching to fail.
-const offlineAssetsExclude = [/GoogleTag\.js$/]; // Excluding GoogleTag.js because ad blockers block it and this will cause the caching to fail.
-
-self.addEventListener('install', event => {
-    console.info('Service worker installing...');
-    event.waitUntil(
-        (async () => {
-
-            const assetsRequests = self.assetsManifest.assets
-                .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
-                .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
-                .map(asset => new Request(asset.url, { integrity: asset.hash, cache: 'no-cache' }));
-            await loadCache(assetsRequests, TEMP_CACHE_NAME);
-
-            //const tenancyAssets = [...self.setsManifest.assets, ...self.setsCmpManifest.assets];
-            //const tenancyRequests = tenancyAssets
-            //    .map(asset => new Request(asset.url, { cache: 'no-cache' }));
-            //await loadCache(tenancyRequests, TEMP_TENANCY_CACHE_NAME);
-
-            // Let the main UI thread know there is a new service worker waiting to activate
-            const clients = await self.clients.matchAll({ type: 'window' });
-            for (const client of clients) {
-                client.postMessage({
-                    action: 'notifyUpdate',
-                    message: 'A new version is available. Please reload the page to update.'
-                });
-            }
-        })()
-    );
-});
-
-async function loadCache(assetsRequests, cacheName) {
-
-    const cache = await caches.open(cacheName);
-
-    // Use Promise.allSettled to handle each request individually
-    const results = await Promise.allSettled(assetsRequests.map(request => fetch(request)));
-    let successCount = 0;
-    let failureCount = 0;
-
-    // Not counting successes and failures?
-    for (const result of results) {
-        if (result.status === 'fulfilled') {
-            try {
-                await cache.put(result.value.url, result.value);
-                successCount++;
-            } catch (error) {
-                console.error('Failed to cache (' + cacheName + '):', result.value.url, error);
-                failureCount++;
-            }
-        } else {
-            console.error('Fetch failed (' + cacheName + '):', result.reason);
-            failureCount++;
+async function sendMessage(action, info) {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (clients) {
+        for (const client of clients) {
+            client.postMessage({
+                action: action,
+                info: info
+            });
         }
     }
-    console.log(`Successfully cached ${successCount} assets.` + cacheName);
-    console.log(`Failed to cache ${failureCount} assets.` + cacheName);
 }
 
+//const offlineAssetsInclude = [/\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.svg$/];
+const offlineAssetsInclude = [/\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.svg$/];
+const offlineAssetsExclude = [/GoogleTag\.js$/]; // Excluding GoogleTag.js because ad blockers block it and this will cause the caching to fail.
 
-
-self.addEventListener('activate', event => {
-    console.log('Service worker activating... version:' + version);
-    event.waitUntil(
-        (async () => {
-            const cacheNames = await caches.keys();
-            await Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName === CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-
-            // Open both the temporary and the new cache
-            const tempCache = await caches.open(TEMP_CACHE_NAME);
-            const cache = await caches.open(CACHE_NAME);
-
-            // Get all the requests from the temporary cache and put them into the new cache
-            const tempCacheKeys = await tempCache.keys();
-            await Promise.all(
-                tempCacheKeys.map(async request => {
-                    const response = await tempCache.match(request);
-                    await cache.put(request, response);
-                })
-            );
-
-            // Delete the temporary cache
-            await caches.delete(TEMP_CACHE_NAME);
-
-            await self.clients.claim();
-        })()
-    );
-});
-
-self.addEventListener('message', event => {
-    console.log('service worker message:' + event.data.action);
-    if (event.data.action == 'skipWaiting') {
-        console.log('service worker skipWaiting');
-        self.skipWaiting();
+self.addEventListener('message', async event => {
+    switch (event.data.action) {
+        case 'checkForNewAssetData':
+            console.log('service worker checkForNewAssetData.');
+            await sendMessage('AssetDataCheckStarted', "");
+            await staticContentModule.checkAssetCaches();
+            break;
+        case 'loadStaticAssets':
+            console.log('service worker loadStaticAssets.');
+            await caches.keys().then(cacheNames => {
+                console.log('Available caches:', cacheNames);
+            });
+            await staticContentModule.readAssetCachesByType("PreCache");
+            break;
+        case 'listCaches':
+            caches.keys().then(cacheNames => {
+                console.log('Available caches:', cacheNames);
+            });
+            break;
+        default:
+            break;
+    }
+    if (event.data.type === 'SET_ASSET_HOST_URL') {
+        try {
+            self.assetHostUrl = new URL(event.data.url);
+        } catch (error) {
+            console.error(error);
+        }
     }
 });
 
-self.addEventListener('controllerchange', () => {
-    console.log('service worker controllerchange');
-    window.location.reload();
-});
 
-
-self.addEventListener('fetch', event => {
-    event.respondWith(
+self.addEventListener('install', event => {
+    console.info('Service worker installing...' + swversion);
+    event.waitUntil(
         (async () => {
-            let cachedResponse = null;
-            // if (event.request.mode === 'navigate') return null;
-            if (event.request.method === 'GET') {
-                try {
-                    // For all navigation requests, try to serve index.html from cache
-                    // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
-                    const shouldServeIndexHtml = event.request.mode === 'navigate';
-                    const request = shouldServeIndexHtml ? '' : event.request;
-                    if (shouldServeIndexHtml) {
-                        console.log('service worker fetch redirect:' + event.request.url + ' to: /');
-                    }
+            try {
+                const response = await fetch('./service-worker-assets.js');
+                const content = await response.text();
+                eval(content);
 
-                    // const request = event.request;
-                    const cache = await caches.open(CACHE_NAME);
-                    cachedResponse = await cache.match(request);
-                } catch (error) {
-                    console.error('Error during fetch:', error);
-                    return null;
-                }
+                // Let the main UI thread know there is a new service worker installing
+                //const clients = await navigator.serviceWorker?.controller.clients.matchAll({ type: 'window' });
+                await sendMessage('ServiceWorkerUpdateStarted', 'A new version is being installed.');
+
+                // Fetch and cache all matching items from the assets manifest into the temp cache
+                version = self.assetsManifest.version;
+                console.log('assetRequests.length():' + self.assetsManifest.assets.length + ", version:" + version);
+                const assetsRequests = self.assetsManifest.assets
+                    .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
+                    .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
+                    .map(asset => {
+                        if (asset.url.includes('index.html')) {
+                            // We don't us asset.hash on index.html because we update the base tag after the 
+                            // msbuild publish step.
+                            return new Request(asset.url, {
+                                cache: 'no-cache'
+                            });
+                        }
+                        else {
+                            return new Request(asset.url, {
+                                integrity: asset.hash,
+                                cache: 'no-cache'
+                            });
+                        }
+                    });
+
+                await staticContentModule.cacheApplicationAssets(assetsRequests);
+                self.skipWaiting(); // Activate the new service worker immediately
+            } catch (error) {
+                console.error('Error during service worker install:', error);
             }
-            // we don't need awaton the fetch becuase it returns a promise
-            return cachedResponse || fetch(event.request);
+
         })()
     );
 });
+
+// This event listener is used to make sure all existing clients are claimed by the new service worker
+self.addEventListener('activate', (event) => {
+    console.log("Service worker activating: " + swversion);
+    event.waitUntil((async () => {
+        await staticContentModule.activateApplicationCache();
+        await self.clients.claim();
+        // await staticContentModule.readAssetCachesByType("PreCache");
+        await staticContentModule.checkAssetCaches();
+        await sendMessage("ServiceWorkerUpdateCompleted", "The new version has been installed.");
+    })());
+});
+
+self.addEventListener('fetch', event => {
+    event.respondWith((async () => {
+        const url = new URL(event.request.url);
+        const path = url.pathname;
+        const isOnline = navigator.isOnline;
+        const request = event.request;
+
+        // Redirect to the base URL if the app is navigated to a different URL
+        // Note that this doesn't handle hard relaods as these bypass the service worker.
+        // You must handle hard reloads on the server side.
+        // The following code breaks the PWA. When the app is run, it doesn't load
+        // and when we inspect appInfo it says the domain is insecure.
+        if (request.mode === 'navigate') {
+            // Blazor navigation detected - ignore
+            // We don't want to fetch when all we are doing is updating the URL for an internal Blazor navigation.
+            // e.g. when we route to a different "page" (really just a Blazor component) in the SPA.
+            // Note: It is important to not return the null, 204 response when the paht is the appPrefix
+            // as this will break the PWA. The PWA will not load and the appInfo will say the domain is insecure.
+            if (path !== appPrefix) {
+                console.log('Blazor navigation detected', url);
+                return new Response(null, { status: 204, statusText: 'no content' });
+            }
+        }
+
+        if (request.method === 'GET' && request.cache !== "no-cache") {
+            try {
+                // examine the request path and determine if this may be a cached asset
+                const cacheName = await staticContentModule.getCacheName(request.url);
+                if (cacheName) {
+                    const cacheStatus = await checkCacheStatus();
+                    if (cacheStatus) {
+                        await staticContentModule.lazyLoadAssetCache(cacheName);
+                        const cachedResponse = await staticContentModule.getCachedResponse(cacheName, request);
+                        if (cachedResponse instanceof Response) {
+                            return cachedResponse;
+                        } else {
+                            // Item is not in cache so just fetch it. We don't add it to the cache here because of
+                            // thread safety issues. This is not a performance issue becuase the browser's native
+                            // cache will have the item, for the cache load to use, when the cache load catches up.
+                            return fetch(request)
+                                .then(response => {
+                                    if (!response.ok) {
+                                        //throw new Error(`HTTP error! status: ${response.status}`);
+                                        console.error('Fetch error:', response.url);
+                                        return new Response(null, { status: 204, statusText: 'no content' });
+                                    }
+                                    return response;
+                                })
+                                .catch(error => {
+                                    console.error('Fetch error:', response.url, error);
+                                    return new Response(null, { status: 204, statusText: 'no content' });
+                                    //return new Response('Fetch error occurred', { status: 500 });
+                                })
+                        }
+                    }
+                    else {
+                        console.warn('No caches found when processing:' + request.url);
+                    }
+                }
+            }
+            catch (error) {
+                console.error('Error during fetch:', event.request.url, error);
+                return new Response('Error during fetch: ', { status: 500 });
+            }
+        }
+        // we don't need await on the fetch because it returns a promise
+        return fetch(request)
+            .then(response => {
+                if (!response.ok) {
+                    // throw new Error(`HTTP error! status: ${response.status}`);
+                    console.error('Fetch error:', response.url);
+                    return new Response(null, { status: 204, statusText: 'no content' });
+                }
+                return response;
+            })
+            .catch(error => {
+                console.error('Fetch error:', response.url, error);
+                return new Response(null, { status: 204, statusText: 'no content' });
+                //return new Response('Fetch error occurred', { status: 500 });
+            })
+    })()
+    );
+});
+
+async function checkCacheStatus() {
+    const cacheNames = await caches.keys();
+    return {
+        exist: cacheNames.length > 0,
+        count: cacheNames.length
+    };
+}
+

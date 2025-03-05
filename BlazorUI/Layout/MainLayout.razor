@@ -1,71 +1,121 @@
 ﻿@namespace BlazorUI
 @inherits LzLayoutComponentBaseInjectViewModel<ISessionsViewModel>
-@* @inject IJSRuntime JSRuntime
-@inject ILzHost Host *@
-@*
-    This component instantiates the ISessionsViewModel singleton.
-    However, Maui Hybrid and WASM apps do not setup the DI context exactly the same way. 
-    In MAUI, it is necessary to pass the JSRuntime into classes that are not UI components. 
-    This is done in the Init.razor page. Once this is done, the SessionsViewModel.IsInitialized
-    property is set to true.
+@inject IJSRuntime JSRuntime
+@inject ILzHost Host
+@inject IBaseAppJS BaseAppJS
+@inject IDialogService DialogService
 
-    Any child components, like NavMenu below, must be aware of the SessionsViewModel 
-    initialization lifecycle and operate property before and after initialization. 
-*@
-
-<MudThemeProvider/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
+@* <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode"/> *@
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <MudLayout>
-	<MudAppBar>
-		<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-	</MudAppBar>
-	<MudDrawer @bind-Open="_drawerOpen">
-		<MudNavMenu>
-			@if (ViewModel!.IsInitialized)
-			{
-				<MudNavLink Href="/HomePage"><MudIcon Icon="@Icons.Material.Filled.Home" />@tenancyName</MudNavLink>
-                @if(ViewModel!.IsSignedIn)
-                {
-                    @if(ViewModel!.IsAdmin)
-                    {
-                        <MudNavLink Href="/AdminPage">Admin</MudNavLink>
-                    }
-                    <MudNavLink Href="/UsersPage">Users</MudNavLink>
-                }
-            }
-		</MudNavMenu>
-	</MudDrawer>
-	<MudMainContent Class="d-flex align-start">
-
-        @Body
-	</MudMainContent>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h5" Class="ml-3">Admin App</MudText>
+        @* <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" /> *@
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" OnClick="@((e) => DrawerToggle())" />
+        @tenancyName 
+        <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Inherit" OnClick="OpenInfoDialogAsync" />
+        <OnLine ViewModel="ViewModel!.SessionViewModel?.InternetConnectivity"/>
+        <SignedIn ViewModel="ViewModel!.SessionViewModel?.AuthProcess"/>
+    </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h5" Class="mt-1">Menu</MudText>
+        </MudDrawerHeader>
+        <NavMenu Title="@tenancyName" />
+    </MudDrawer>
+    <MudMainContent id="yada">
+        <MudContainer>
+            <AppUpdates ViewModel="@BaseAppJS" />
+            @Body
+        </MudContainer>
+    </MudMainContent>
 </MudLayout>
 
+
 @code {
-    [Parameter] public string Title { get; set; } = "";
-
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = true;
+    private MudTheme? _theme = null;
     private string tenancyHostUrl = string.Empty;
-
     private string? tenancyName = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        Console.WriteLine("MainLayout");
-        await base.OnInitializedAsync();
-    }
+        base.OnInitialized();
 
+        _theme = new()
+            {
+                PaletteLight = _lightPalette,
+                PaletteDark = _darkPalette,
+                LayoutProperties = new LayoutProperties()
+            };
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        tenancyName = ViewModel?.ClientConfig?.TenancyConfig?["tenantName"]?.ToString();
+        tenancyName = ViewModel?.TenancyConfig?["tenantKey"]?.ToString();
 
         await base.OnAfterRenderAsync(firstRender);
     }
-
-    private bool _drawerOpen = true;
-    void DrawerToggle()
+    private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
+    private void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+    private Task OpenInfoDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        return DialogService.ShowAsync<AppInfo>("Info",  options);
+    }
+
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode,
+    };
+    private readonly PaletteLight _lightPalette = new()
+        {
+            Black = "#110e2d",
+            AppbarText = "#424242",
+            AppbarBackground = "rgba(255,255,255,0.8)",
+            DrawerBackground = "#ffffff",
+            GrayLight = "#e8e8e8",
+            GrayLighter = "#f9f9f9",
+        };
+    private readonly PaletteDark _darkPalette = new()
+        {
+            Primary = "#7e6fff",
+            Surface = "#1e1e2d",
+            Background = "#1a1a27",
+            BackgroundGray = "#151521",
+            AppbarText = "#92929f",
+            AppbarBackground = "rgba(26,26,39,0.8)",
+            DrawerBackground = "#1a1a27",
+            ActionDefault = "#74718e",
+            ActionDisabled = "#9999994d",
+            ActionDisabledBackground = "#605f6d4d",
+            TextPrimary = "#b2b0bf",
+            TextSecondary = "#92929f",
+            TextDisabled = "#ffffff33",
+            DrawerIcon = "#92929f",
+            DrawerText = "#92929f",
+            GrayLight = "#2a2833",
+            GrayLighter = "#1e1e2d",
+            Info = "#4a86ff",
+            Success = "#3dcb6c",
+            Warning = "#ffb545",
+            Error = "#ff3f5f",
+            LinesDefault = "#33323e",
+            TableLines = "#33323e",
+            Divider = "#292838",
+            OverlayLight = "#1e1e2d80",
+        };
 }

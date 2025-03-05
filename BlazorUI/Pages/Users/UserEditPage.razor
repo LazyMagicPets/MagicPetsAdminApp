@@ -1,88 +1,170 @@
-﻿@namespace BlazorUI
+@namespace BlazorUI
 @page "/UserEditPage"
-@inherits LzCoreComponentBaseAssignViewModel<UserViewModel>
+@inherits LzComponentBaseAssignViewModel<TenantUserViewModel>
 @inject ISessionsViewModel SessionsViewModel
 @inject NavigationManager NavigationManager
-<MudPaper Class="d-flex flex-column">
-    <h3>UserEditPage</h3>
+@inject ILoggerFactory LoggerFactory
 
-    <MudCard>
+<h3>UserPage</h3>
+
+@using FluentValidation
+
+<MudCard>
+    <MudForm ViewModel="@model" 
+        @ref="@form" 
+        Validation="@(TenantUserModelValidator.ValidateValue)" 
+        ValidationDelay="0" 
+        Disabled="@ViewModel!.IsBusy"
+        >
         <MudCardContent>
-            <MudForm Model="@model" @ref="@form" Validation="@(ValidateValue)">
-                <MudTextField Label="Name" @bind-Value="model.Name" />
-                <MudTextField Label="Email" @bind-Value="model.Email" />
-                <MudTextField Label="Phone" @bind-Value="model.Phone" />
-                <MudCheckBox Label="Employee" @bind-Value="model.Employee" />
-                <MudCheckBox Label="Admin" @bind-Value="model.Admin" />
-            </MudForm>
-            <MudText>@saveResult</MudText>
+
+            <MudTextField @bind-Value="model.Login"
+            For="@(() => model.Login)"
+            Immediate="true"
+            Label="Login" />
+            <MudTextField @bind-Value="model.Name"
+            For="@(() => model.Name)"
+            Immediate="true"
+            Label="Name" />
+            <MudTextField @bind-Value="model.Email"
+            For="@(() => model.Email)"
+            Immediate="true"
+            Label="Email" />
+            <MudTextField @bind-Value="model.Phone"
+            For="@(() => model.Phone)"
+            Immediate="true"
+            Label="Phone" />
+            <MudSwitch @bind-Value="model.Admin"
+            For="@(() => model.Admin)"
+            Label="Admin" />
+
         </MudCardContent>
-        <MudCardActions>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Submit())">Submit</MudButton>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await Cancel())">Cancel</MudButton>
-        </MudCardActions>
-    </MudCard>
-</MudPaper>
+    </MudForm>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await SaveEditAsync())">@AddOrUpdateText </MudButton>
+        @if (ViewModel!.State != LzItemViewModelState.Edit)
+        {
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await DeleteAsync())">Delete</MudButton>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await CancelAsync())">Cancel</MudButton>
+    </MudCardActions>
+</MudCard>
+
 @code {
-    private string saveResult = string.Empty;
-    private EditContext? editContext;
-    private UserModel model => ViewModel?.Data!;
-    private UsersViewModel usersViewModel => SessionsViewModel!.SessionViewModel!.UsersViewModel;
-    private bool IsModified => (editContext == null) ? false : editContext.IsModified();
-    private bool IsAdd => ViewModel!.IsNew;
-    private bool IsEdit => ViewModel!.IsEdit;
-    private bool IsExit = false;
+    [Inject] ISnackbar? Snackbar { get; set; }
 
     private MudForm? form;
+    private TenantUserModel model => ViewModel!.Data!;
+    private LocalUserModelValidator TenantUserModelValidator = new LocalUserModelValidator();
+    private EditContext? editContext;
+    private TenantUsersViewModel? UsersViewModel;
 
-    private UserModelValidator userModelValidator = new UserModelValidator();
-
-    private Func<UserModelValidator, object, string, Task<IEnumerable<string>>> ValidateValue =>
-        async (validator, model, propertyName) =>
+    protected override async Task OnInitializedAsync()
+    {
+        UsersViewModel = SessionsViewModel!.SessionViewModel!.TenantUsersViewModel!;
+        ViewModel = UsersViewModel!.EditViewModel!;  
+        if (ViewModel == null)
         {
-            var result = await validator.ValidateAsync(ValidationContext<UserModel>.CreateWithOptions((UserModel)model, x => x.IncludeProperties(propertyName)));
+            // Create a new TenantUserViewModel if the TenantUsersViewModel didn't
+            var user = new AdminSchema.TenantUser();
+            user.Id = Guid.NewGuid().ToString(); // You can skip assignment of the Id if it gets assigned by the server
+            user.Login = "";
+            user.Name = ""; // null value is not allowed
+            user.Email = "";
+            ViewModel = new TenantUserViewModel(LoggerFactory, SessionsViewModel!.SessionViewModel, UsersViewModel, user);
+            ViewModel.State = LzItemViewModelState.New;
+        }
+        var (success, msg) = await ViewModel.OpenEditAsync(); // copies the existing data so cancel can restore it
+        if (!success)
+        {
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+            NavigationManager.NavigateTo("UsersPage");
+        }
+        editContext = new EditContext(ViewModel!.Data!);
+        await base.OnInitializedAsync();
+    }
+
+    private string AddOrUpdateText => ViewModel!.State == LzItemViewModelState.New ? "Add" : "Update";
+
+    // Introduction to LzItemViewModel<TModel>
+    // UserViewModel is derived from LzItemViewModel<TenantUserModel>
+    // As such, edit management methods and a State property are provided in the base class:
+    // State property: New, Edit, Current, Deleted
+    // - OpenEditAsync() - copies the existing data so cancel can restore it, State = Edit or State = New
+    // - SaveEditAsync() - saves the data to the server, State = Current
+    // - DeleteAsync() - deletes the data from the server, State = Deleted
+    // - CancelEditAsync() - restores the data to its original state, State = Current
+    // If a ItemsViewModel owns this item, the base class makes these
+    // callbacks to it: ItemAddded(), ItemUpdated(), ItemDeleted(), ItemCancelled()
+    // Since the base class provides a complete set of edit management methods, it
+    // is a good idea to review the class to see if it meets your needs and use it
+    // consistently across your application if it does. Remember that a Blazor component
+    // should focus on the UI and not contain business logic. The ViewModel should handle
+    // business logic. While managing the edit state of an item is at the intersection of UI
+    // and business logic, it is preferable to imiplement this logic in the ViewModel to allow
+    // headless testing of the create/update/delete process.
+
+    private async Task CancelAsync()
+    {
+        var (success, msg) = await ViewModel!.CancelEditAsync();
+        if (!success)
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+
+        NavigationManager.NavigateTo("UsersPage");
+    }
+
+    private async Task SaveEditAsync()
+    {
+        await form!.Validate();
+
+        if (!form.IsValid)
+            return;
+
+        var (success, msg) = await ViewModel!.SaveEditAsync();
+        if (!success)
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+        else
+            NavigationManager.NavigateTo("UsersPage");
+    }
+
+    private async Task DeleteAsync()
+    {
+        var (success, msg) = await ViewModel!.DeleteAsync(ViewModel.Id);
+        if (!success)
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+
+        NavigationManager.NavigateTo("UsersPage");
+    }
+
+    // A local validator class that extends the validator generated by LazyMagic and
+    // possibly extended in the ClientSDK code. The ClientSDK provides two validator
+    // classes, one for the DTO, and one for the Model. This local validator
+    // applies the validations defined in the ClientSDK and adds any additional
+    // validations required for the ws. It also implements the ValidateValue
+    // method required by MudBlazor. So, you may have three levels of validation:
+    // 1. DTO level validation in the ClientSDK - validates the DTO is suitable for transfer
+    // 2. Model level validation in the ClientSDK - generally applicable business domain validation
+    // 3. Local validation in the BlazorUI project - ws specific validation
+    partial class LocalUserModelValidator : TenantUserModelValidator
+    {
+
+        // CustomValidation called from UserModelValidator constructor
+        void CustomValidate()
+        {
+            // Add ws side validation here
+            RuleFor(x => x.Name)
+                .NotEmpty()
+                .Length(1, 100);
+        }
+
+        // Extend class with validation result required for MudBlazor
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<TenantUserModel>.CreateWithOptions((TenantUserModel)model, x => x.IncludeProperties(propertyName)));
             if (result.IsValid)
                 return Array.Empty<string>();
             return result.Errors.Select(e => e.ErrorMessage);
         };
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        ViewModel = SessionsViewModel!.SessionViewModel!.UsersViewModel.CurrentViewModel;
-        await ViewModel!.OpenEditAsync();
-        editContext = new EditContext(model!);
-        await base.OnInitializedAsync();
     }
-
-    private async Task Cancel()
-    {
-        IsExit = true;
-        var state = ViewModel!.State;
-        await usersViewModel.CancelCurrentViewModelEditAsync();
-
-        if (state == LzItemViewModelState.New)
-        {
-            NavigationManager.NavigateTo("UsersPage");
-        }
-        else
-        {
-            NavigationManager.NavigateTo("UserPage");
-        }
-    }
-
-    private async Task Submit()
-    {
-        await form!.Validate();
-        if (!form.IsValid)
-            return;
-
-        var (success, msg) = await usersViewModel.SaveCurrentViewModelAsync(model.Id);
-
-        if (success)
-            NavigationManager.NavigateTo("UserPage");
-
-        saveResult = msg;
-    }
-
 }
+

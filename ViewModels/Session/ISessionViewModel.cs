@@ -1,12 +1,13 @@
 ﻿
+using AdminApi;
 using System.ComponentModel;
 
 namespace ViewModels;
 
-public interface ISessionViewModel : ILzSessionViewModelAuthNotifications, INotifyPropertyChanged
+public interface ISessionViewModel : ILzSessionViewModelAuthNotifications
 {
-    IService Store { get; set; }
-    UsersViewModel UsersViewModel { get; set; }
-    public string TenantName { get; set; }
-    public CallerInfo? CallerInfo { get; set; } 
+    IAdminApi Admin { get; set; }   
+    TenantUsersViewModel TenantUsersViewModel { get; set; }
+    SubtenantsViewModel SubtenantsViewModel { get; set; }
+    string TenantName { get; set; }
 }

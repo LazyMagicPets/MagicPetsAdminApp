@@ -4,15 +4,15 @@
 
 var bodylinks = [
     // example:
-    //    { href: '_content/Tenancy/favicon.png', rel: 'icon', type: 'image/png' },
-]; 
+    //    { href: '_content/BlazorUI/myimage.png', rel: 'icon', type: 'image/png' },
+];
 
 bodylinks.forEach(function (linkInfo) {
     var link = document.createElement('link');
     Object.keys(linkInfo).forEach(function (key) {
         link.setAttribute(key, linkInfo[key]);
     });
-    document.body.appendChild(link);
+    document.head.appendChild(link);
 });
 
 // Function to dynamically load a script
@@ -25,8 +25,8 @@ function loadScript(url) {
 }
 
 // Load Scripts
-loadScript("_content/MudBlazor/MudBlazor.min.js");
 
+loadScript('_content/MudBlazor/MudBlazor.min.js');
 
 // Utility functions that are globally available to the app
 
@@ -38,21 +38,12 @@ loadScript("_content/MudBlazor/MudBlazor.min.js");
 //});
 
 // This function sends a message to the service worker to set the tenancy host url
-window.setTenancyHostUrl = function (url) {
+window.setAssetHostUrl = function (url) {
+    window.assetHostUrl = new URL(url);
     if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
-            type: 'SET_TENANCY_HOST_URL',
+            type: 'SET_ASSET_HOST_URL',
             url: url
         });
     }
 }
-
-// We intercept reloads so we can redirect to the init page instead of 
-// staying on the current page.
-//window.onload = function () {
-//    console.log("Window loaded");
-//    if (performance.navigation.type === 1) { // 1 means the page is reloaded
-//        console.log("Page reload detected. Redirecting to root...");
-//        window.location.href = '/'; // Redirect to the root of the application
-//    }
-//}

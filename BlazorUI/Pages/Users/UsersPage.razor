@@ -1,72 +1,82 @@
-﻿@namespace BlazorUI
+@namespace BlazorUI
 @page "/UsersPage"
-@inherits LzCoreComponentBasePassViewModel<UsersViewModel>
+@inherits LzComponentBasePassViewModel<TenantUsersViewModel>
 @inject ISessionsViewModel SessionsViewModel
 @inject NavigationManager NavigationManager
-<MudPaper Class="d-flex flex-column">
-    <h3>UsersPage</h3>
-    @if (ViewModel!.IsLoading)
-    {
-        <Busy />
-    }
-    else
-    {
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await OnUserAdd())">Add User</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto" OnClick="@(async () => await OnRefresh())">Refresh</MudButton>
-        <MudDataGrid T="UserViewModel"
-                     MultiSelection="false"
-                     Items="items"
-                     SortMode="SortMode.Multiple"
-                     Filterable="true"
-                     Hidable="true"
-                     RowClick="@OnUserEdit">
-            <ToolBarContent>
 
-            </ToolBarContent>
-            <Columns>
-                <SelectColumn T="UserViewModel" />
-                <PropertyColumn Property="x => x!.Data!.Name" Title="Name" />
-                <PropertyColumn Property="x => x!.Data!.Login" Title="Login" />
-                <PropertyColumn Property="x => x!.Data!.Email" Title="Email" />
-                <PropertyColumn Property="x => x!.Data!.Phone" Title="Phone" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="UserViewModel" />
-            </PagerContent>
 
-        </MudDataGrid>
-
-    }
-</MudPaper>
+<h3>UsersPage</h3>
+@if (ViewModel!.IsLoading)
+{
+    <Busy />
+}
+else
+{
+    <MudCard>
+        <MudCardContent>
+            <MudTable T="TenantUserModel"
+            Items="@ViewModel.ViewModels.Values.Select(x => x.Data)">
+                <HeaderContent>
+                    <MudTh>Login</MudTh>
+                    <MudTh>Email</MudTh>
+                    <MudTh>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Default" OnClick="AddUser" />
+                    </MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Username">@context.Login</MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <mudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => EditUser(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Primary" OnClick="@(() => DeleteUser(context))" />
+                    </mudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="UsersReloadAsync">Reload</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
 
 @code {
+    [Inject] ISnackbar? Snackbar { get; set; }
+    private MudTable<TenantUserModel> table = new MudTable<TenantUserModel>();
     private string testString = string.Empty;
-    private IEnumerable<UserViewModel>? items => ViewModel!.ViewModels.Values;
 
-
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
-        ViewModel = SessionsViewModel!.SessionViewModel!.UsersViewModel;
+        ViewModel = SessionsViewModel!.SessionViewModel!.TenantUsersViewModel;
+        await UsersReloadAsync();
         base.OnInitialized();
     }
 
-    private async Task OnRefresh()
+    private void AddUser()
     {
-        await ViewModel!.ReadAsync();
-    }
-
-    private async Task OnUserAdd()
-    {
-        await ViewModel!.CreateAsync();
-       
         NavigationManager.NavigateTo("UserEditPage");
-
     }
-    private Task OnUserEdit(DataGridRowClickEventArgs<UserViewModel> args)
+
+    private void EditUser(TenantUserModel user)
     {
-        ViewModel!.CurrentViewModel = args.Item;
+        var viewModel = ViewModel!.CurrentViewModel = ViewModel!.EditViewModel = ViewModel.ViewModels[user.Id];
         NavigationManager.NavigateTo("UserEditPage");
-        return Task.CompletedTask;
+    }   
+    
+    private async Task DeleteUser(TenantUserModel user)
+    {
+        var viewModel = ViewModel!.ViewModels[user.Id];
+        var (success, msg) = await viewModel.DeleteAsync();
+        if (!success)
+        {
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+        }
+    }   
+    private async Task UsersReloadAsync()
+    {
+        var (success, msg) = await ViewModel!.ReadAsync();
+        if (!success)
+        {
+            Snackbar!.Add(msg, MudBlazor.Severity.Error);
+        }
     }
-
 }

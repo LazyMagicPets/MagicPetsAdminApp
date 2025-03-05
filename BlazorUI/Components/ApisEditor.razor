@@ -1,0 +1,175 @@
+﻿@namespace BlazorUI
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components.Web
+
+<MudPaper Class="pa-4">
+    <MudText Typo="Typo.caption">APIs</MudText>
+    <MudStack Spacing="2">
+        <!-- The MudTable displaying the APIs -->
+        <MudTable Items="@Apis">
+            <HeaderContent>
+                <MudTh>Path</MudTh>
+                <MudTh>API</MudTh>
+                @if (editAllowed)
+                {
+                    <MudTh>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@AddNew" />
+                    </MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate>
+                @if (editingApi != null && editingApi == context)
+                {
+                    <!-- Inline edit/add mode -->
+                    <MudTd>
+                        <MudTextField @bind-Value="editingCopy.Path" @ref="pathFieldRef" />
+                    </MudTd>
+                    <MudTd>
+                        <MudTextField @bind-Value="editingCopy.Name" />
+                    </MudTd>
+                    @if (editAllowed)
+                    {
+                        <MudTd>
+                            <MudButton Color="Color.Primary" OnClick="@(() => SaveEdit(context))" @ref="saveButtonRef">
+                            Save
+                        </MudButton>
+                        <MudButton Color="Color.Secondary" OnClick="@CancelEdit">Cancel</MudButton>
+                    </MudTd>
+                    }
+                }
+                else
+                {
+                    <!-- Read-only row -->
+                    <MudTd>@context.Path</MudTd>
+                    <MudTd>@context.Name</MudTd>
+                    if (editAllowed)
+                    {
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => BeginEdit(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteApi(context))" />
+                        </MudTd>
+                    }
+                }
+            </RowTemplate>
+        </MudTable>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public ICollection<Api> Apis { get; set; }
+    private bool editAllowed = false; // Disable editing until we move subtenant management out of the powershell scripts
+    private Api editingApi;         // The API being edited (or added)
+    private Api editingCopy = new(); // A copy to hold temporary changes
+
+    // References for setting focus.
+    private MudTextField<string> pathFieldRef;
+    private MudButton saveButtonRef;
+
+    // Flag to focus the Path field after adding a new row.
+    private bool isNewlyAdded = false;
+
+    /// <summary>
+    /// Puts the selected API row in edit mode.
+    /// </summary>
+    private void BeginEdit(Api api)
+    {
+        editingApi = api;
+        editingCopy = new Api
+        {
+            Path = api.Path,
+            ApiName = api.ApiName
+        };
+    }
+
+    /// <summary>
+    /// Saves the changes made during edit or add.
+    /// </summary>
+    private void SaveEdit(Api api)
+    {
+        api.Path = editingCopy.Path;
+        api.ApiName = editingCopy.ApiName;
+        editingApi = null;
+    }
+
+    /// <summary>
+    /// Cancels the edit/add operation.
+    /// If canceling a new API (with empty values), it removes it from the collection.
+    /// </summary>
+    private void CancelEdit()
+    {
+        Apis.Remove(editingApi);
+        editingApi = null;
+    }
+
+    /// <summary>
+    /// Deletes the specified API from the collection.
+    /// </summary>
+    private void DeleteApi(Api api)
+    {
+        Apis.Remove(api);
+    }
+
+    /// <summary>
+    /// Adds a new API row and immediately puts it in inline edit mode.
+    /// </summary>
+    private void AddNew()
+    {
+        var newApi = new Api();
+        Apis.Add(newApi);
+        isNewlyAdded = true;
+        BeginEdit(newApi);
+    }
+
+    /// <summary>
+    /// After rendering, if a new row was added, focus the Path field.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isNewlyAdded && pathFieldRef != null)
+        {
+            await pathFieldRef.FocusAsync();
+            isNewlyAdded = false;
+        }
+    }
+
+    /// <summary>
+    /// When the user presses a key in the ApiName field, if it's Enter, move focus to the Save button.
+    /// </summary>
+    private async Task HandleApiNameKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await FocusSaveButton();
+        }
+    }
+
+    /// <summary>
+    /// When the ApiName field loses focus (e.g. via tabbing out), move focus to the Save button.
+    /// </summary>
+    private async Task HandleApiNameBlur(FocusEventArgs args)
+    {
+        await FocusSaveButton();
+    }
+
+    /// <summary>
+    /// Moves focus to the Save button if available.
+    /// </summary>
+    private async Task FocusSaveButton()
+    {
+        if (saveButtonRef != null)
+        {
+            await saveButtonRef.FocusAsync();
+        }
+    }
+
+    private async Task OnApiNameKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await FocusSaveButton();
+        }
+        // For other keys, nothing extra is needed.
+    }
+
+}

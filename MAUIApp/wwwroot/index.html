@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- We have modified the standard MAUI Hybrid Index.hmtl file to rely on assets
-    in the BlazorUI razor library project where the App UI lives. The intent is to
-    have the skinniest MAUIApp possible so all App level UI code lives in the
+    in the BlazorUI razor library project where the App UI lives. The intent is to 
+    have the skinniest MAUIApp possible so all App level UI code lives in the 
     BlazorUI library. -->
 <html lang="en">
 <head>
@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <base href="/" />
     <link rel="stylesheet" href="MAUIApp.styles.css" />
+    <link href="_content/BlazorUI/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="_content/BlazorUI/css/app.css" rel="stylesheet" />
     <!-- Do not load application component speicific styles inline. Instead put them
     in the indexhead.js script. -->
@@ -29,6 +30,7 @@
     in the indexbody.js script. -->
     <script src="_content/BlazorUI/indexbody.js"></script>
     <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script type="module" src="indexinit.js"></script>
 
 </body>
 
