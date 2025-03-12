@@ -102,3 +102,104 @@ LazyMagic ViewModels provide a robust view management feature set. See the Libra
 | LazyMagic.DIHelper | Generate a DIHelper class with a RegisterServices() method to automatically register classes which implement ILzTransient, ILzSingleton or ILzScoped interfaces. |
 | LazyMagic.FactoryGenerator | Generate DI factory class code for classes annotated with [Factory] annotation. This avoids a boatload of boilerplate coding. This analyzer is primarily used with ViewModel classes.|
 
+# Microsoft.AspNetCore and Microsoft.Extensions Namespace Compatibility
+
+## Microsoft.AspNetCore Namespaces
+
+| Namespace | Blazor WebAssembly | MAUI Blazor Hybrid | ASP.NET Core MVC |
+|-----------|-------------------|-------------------|------------------|
+| `Microsoft.AspNetCore.Components` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.Components.Web` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.Components.Authorization` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.Components.Forms` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.Components.Routing` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.Authorization` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.WebUtilities` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.SignalR.Client` | ✅ | ✅ | ✅ |
+| `Microsoft.AspNetCore.Components.WebAssembly` | ✅ | ❌ | ❌ |
+| `Microsoft.AspNetCore.Components.WebAssembly.Authentication` | ✅ | ❌ | ❌ |
+| `Microsoft.AspNetCore.Components.WebAssembly.Http` | ✅ | ❌ | ❌ |
+| `Microsoft.AspNetCore.Components.WebAssembly.DevServer` | ✅ (dev only) | ❌ | ❌ |
+| `Microsoft.AspNetCore.Components.WebView.Maui` | ❌ | ✅ | ❌ |
+| `Microsoft.AspNetCore.Mvc` | ❌ | ❌ | ✅ |
+| `Microsoft.AspNetCore.Http` | ❌ | ❌ | ✅ |
+| `Microsoft.AspNetCore.Hosting` | ❌ | ❌ | ✅ |
+| `Microsoft.AspNetCore.Builder` | ❌ | ❌ | ✅ |
+| `Microsoft.AspNetCore.Identity` | ❌ | ❌ | ✅ |
+
+## Microsoft.Extensions Namespaces
+
+| Namespace | Blazor WebAssembly | MAUI Blazor Hybrid | ASP.NET Core MVC |
+|-----------|-------------------|-------------------|------------------|
+| `Microsoft.Extensions.DependencyInjection` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Configuration` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Logging` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Options` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Caching` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Http` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Primitives` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Localization` | ✅ | ✅ | ✅ |
+| `Microsoft.Extensions.Hosting` | ❌ | ✅ | ✅ |
+| `Microsoft.Extensions.FileProviders` | ❌ | ✅ | ✅ |
+
+## Testing Frameworks
+
+| Package | Blazor WebAssembly | MAUI Blazor Hybrid | ASP.NET Core MVC |
+|-----------|-------------------|-------------------|------------------|
+| `Microsoft.NET.Test.Sdk` | ✅ | ✅ | ✅ |
+| `MSTest.TestAdapter` | ✅ | ✅ | ✅ |
+| `MSTest.TestFramework` | ✅ | ✅ | ✅ |
+| `xunit` | ✅ | ✅ | ✅ |
+| `NUnit` | ✅ | ✅ | ✅ |
+
+## System.* Namespaces
+
+| Namespace | Blazor WebAssembly | MAUI Blazor Hybrid | ASP.NET Core MVC |
+|-----------|-------------------|-------------------|------------------|
+| `System.Collections` | ✅ | ✅ | ✅ |
+| `System.Linq` | ✅ | ✅ | ✅ |
+| `System.Text` | ✅ | ✅ | ✅ |
+| `System.Text.Json` | ✅ | ✅ | ✅ |
+| `System.Net.Http` | ✅ | ✅ | ✅ |
+| `System.Threading` | ✅ | ✅ | ✅ |
+| `System.IO` | ✅* | ✅ | ✅ |
+| `System.Runtime` | ✅ | ✅ | ✅ |
+| `System.ComponentModel` | ✅ | ✅ | ✅ |
+| `System.Diagnostics` | ✅* | ✅ | ✅ |
+| `System.Drawing` | ❌ | ✅ | ✅ |
+| `System.Windows.Forms` | ❌ | ❌ | ❌ |
+| `System.Web` | ❌ | ❌ | ✅* |
+| `System.ServiceProcess` | ❌ | ❌ | ✅ |
+| `System.Management` | ❌ | ❌ | ✅ |
+| `System.DirectoryServices` | ❌ | ❌ | ✅ |
+
+\* Limited functionality compared to full implementation
+
+## System.IdentityModel Namespaces
+
+| Namespace | Blazor WebAssembly | MAUI Blazor Hybrid | ASP.NET Core MVC |
+|-----------|-------------------|-------------------|------------------|
+| `System.IdentityModel.Tokens.Jwt` | ✅ | ✅ | ✅ |
+| `System.IdentityModel.Tokens` | ✅ | ✅ | ✅ |
+| `System.IdentityModel.Protocols` | ✅ | ✅ | ✅ |
+| `System.IdentityModel.Selectors` | ❌ | ✅ | ✅ |
+| `System.IdentityModel.Claims` | ❌ | ✅ | ✅ |
+| `System.IdentityModel.Policy` | ❌ | ❌ | ✅ |
+| `System.IdentityModel.Services` | ❌ | ❌ | ✅ |
+
+## Microsoft.IdentityModel Namespaces
+
+| Namespace | Blazor WebAssembly | MAUI Blazor Hybrid | ASP.NET Core MVC |
+|-----------|-------------------|-------------------|------------------|
+| `Microsoft.IdentityModel.Tokens` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.JsonWebTokens` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Logging` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Protocols` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Protocols.OpenIdConnect` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Protocols.WsFederation` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Tokens.Saml` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Tokens.Jwt` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Abstractions` | ✅ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Extensions` | ❌ | ✅ | ✅ |
+| `Microsoft.IdentityModel.Web` | ❌ | ❌ | ✅ |
+| `Microsoft.IdentityModel.Clients.ActiveDirectory` (Legacy) | ❌ | ✅ | ✅ |

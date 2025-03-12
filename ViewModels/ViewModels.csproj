@@ -4,12 +4,9 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<!--<SourceEmbedConfigFolder>..\..\Store.Config\ClientConfigToEmbed</SourceEmbedConfigFolder>-->
 		<DebugType>portable</DebugType>
 		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
 	</PropertyGroup>
-
-	<!--<Import Project="..\..\LazyMagicClient\LazyMagic.Config\EmbedConfig.xml" />-->
 	
 	<ItemGroup>
 		<TrimmerRootAssembly Include="LazyMagic.Shared" />
@@ -20,11 +17,9 @@
 		<PackageReference Include="LazyMagic.Client.FactoryGenerator" PrivateAssets="all" OutputItemType="Analyzer" />
 		<PackageReference Include="LazyMagic.Client.ViewModels.Auth.Notifications" />
 		<PackageReference Include="LazyMagic.Shared" />
-
-		<PackageReference Include="ReactiveUI.Fody" />
-		<PackageReference Include="ReactiveUI" />
-
-		<PackageReference Include="Splat.Microsoft.Extensions.Logging" />
+	</ItemGroup>
+	
+	<ItemGroup>
 		<PackageReference Include="AdminApi" />
 
 	</ItemGroup>

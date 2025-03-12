@@ -101,7 +101,7 @@ else
             await SessionsViewModel!.SessionViewModel!.Admin.SeedPetsAsync(id,5); 
             Snackbar!.Add("Seedpets Succeded", Severity.Success);   
         }
-        catch (Exception e)
+        catch 
         {
             Snackbar!.Add("Seedpets Failed", Severity.Error);
         }

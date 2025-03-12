@@ -6,7 +6,7 @@ public static class ConfigureViewModels
     {
         var assembly = MethodBase.GetCurrentMethod()?.DeclaringType?.Assembly;
 
-        RegisterFactories.Register(services);
+        ViewModelsRegisterFactories.ViewModelsRegister(services);
 
         // LzViewModelFactory.RegisterLz(services, assembly!); // Register services having interfaces ILzTransient, ILzSingleton and ILzScoped
 

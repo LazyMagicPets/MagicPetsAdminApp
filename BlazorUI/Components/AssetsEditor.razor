@@ -6,7 +6,7 @@
     <MudText Typo="Typo.caption">Assets</MudText>
     <MudStack Spacing="2">
         <!-- The MudTable displaying the ASSETs -->
-        <MudTable Items="@Assets">
+        <MudTable Items="@AssetsCollection">
             <HeaderContent>
                 <MudTh>Path</MudTh>
                 <MudTh>Asset</MudTh>
@@ -57,15 +57,14 @@
 </MudPaper>
 
 @code {
-    [Parameter]
-    public ICollection<Asset> Assets { get; set; }
+    [Parameter] public ICollection<Asset>? AssetsCollection { get; set; }
     private bool editAllowed = false; // Disable editing until we move subtenant management out of the powershell scripts
-    private Asset editingAsset;         // The ASSET being edited (or added)
+    private Asset? editingAsset;         // The ASSET being edited (or added)
     private Asset editingCopy = new(); // A copy to hold temporary changes
 
     // References for setting focus.
-    private MudTextField<string> pathFieldRef;
-    private MudButton saveButtonRef;
+    private MudTextField<string>? pathFieldRef;
+    private MudButton? saveButtonRef;
 
     // Flag to focus the Path field after adding a new row.
     private bool isNewlyAdded = false;
@@ -99,7 +98,7 @@
     /// </summary>
     private void CancelEdit()
     {
-        Assets.Remove(editingAsset);
+        AssetsCollection!.Remove(editingAsset!);
         editingAsset = null;
     }
 
@@ -108,7 +107,7 @@
     /// </summary>
     private void DeleteAsset(Asset asset)
     {
-        Assets.Remove(asset);
+        AssetsCollection!.Remove(asset!);
     }
 
     /// <summary>
@@ -121,7 +120,7 @@
                 Path = "",
                 Suffix = "{ts}"
         };
-        Assets.Add(newAsset);
+        AssetsCollection!.Add(newAsset);
         isNewlyAdded = true;
         BeginEdit(newAsset);
     }

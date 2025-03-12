@@ -1,4 +1,4 @@
-@namespace BlazorUI
+ @namespace BlazorUI
 @page "/SubtenantEditPage"
 @inherits LzComponentBaseAssignViewModel<SubtenantViewModel>
 @inject ISessionsViewModel SessionsViewModel
@@ -10,7 +10,7 @@
 @using FluentValidation
 
 <MudCard>
-    <MudForm ViewModel="@model" 
+    <MudForm Model="@model" 
     @ref="@form" 
     Validation="@(SubtenantModelValidator.ValidateValue)" 
     ValidationDelay="0"
@@ -161,4 +161,3 @@
         };
     }
 }
-

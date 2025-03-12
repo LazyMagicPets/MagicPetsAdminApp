@@ -1,9 +1,14 @@
-
-using LazyMagic.Client.ViewModels;
-using ReactiveUI.Blazor;
-
+using BlazorUI;
+using LazyMagic.Client.Base;
+using LazyMagic.Blazor;
+using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.Web;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using ViewModels;
 
 namespace WASMApp;
+
 public partial class Program
 {
     private static JObject? _appConfig;
@@ -58,7 +63,7 @@ public partial class Program
             new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) }))
         .AddSingleton<ILzMessages, LzMessages>()
         .AddSingleton<ILzClientConfig, LzClientConfig>()
-        .AddSingleton<BlazorInternetConnectivity>()
+        .AddSingleton<LazyMagic.Blazor.BlazorInternetConnectivity>()
 
         .AddSingleton<IBlazorInternetConnectivity>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
         .AddSingleton<IInternetConnectivitySvc>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())

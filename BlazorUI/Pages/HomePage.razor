@@ -23,9 +23,8 @@
 
 @if(isBusy) {
     <Busy />
-    <p>Busy</p>
 } else {
-    <MudPaper Height="400px" Width="600px">
+    <MudPaper >
         <MudContainer Fixed="true">
 
             @if (ViewModel!.IsSignedIn)
@@ -42,7 +41,7 @@
 }
 
 
-<MudDialog @nind-bind-Visible="@showAdminRequiredDialog" Width="300px">
+<MudDialog @bind-Visible="@showAdminRequiredDialog">
     <DialogContent>
         <p>Only Administrators can access this page.</p>
     </DialogContent>

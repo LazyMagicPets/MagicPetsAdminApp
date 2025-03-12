@@ -28,6 +28,8 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
             var tenantKey = (string?)clientConfig.TenancyConfig["tenantKey"] ?? throw new Exception("Cognito TenancyConfig.tenantKey is null");
             TenantName = AppConfig.TenantName;
             authProcess.SetAuthenticator(clientConfig.AuthConfigs?["TenantAuth"]!);
+            authProcess.SetSignUpAllowed(false);
+
 
             var sessionId = Guid.NewGuid().ToString(); 
 
@@ -56,10 +58,11 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
     public string TenantName { get; set; } = string.Empty;
 
     // Base class calls LoadAsync () when IsSignedIn changes to true
-    public override async Task LoadAsync()
+    public override Task LoadAsync()
     {
         // don't do preloadading. Instead, load sections, TenantUsers, when
         // the user navigates to them. 
+        return Task.CompletedTask;
     }
     // Base class calls UnloadAsync () when IsSignedIn changes to false
     public override async Task UnloadAsync()

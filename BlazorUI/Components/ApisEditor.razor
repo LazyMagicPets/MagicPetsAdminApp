@@ -57,14 +57,14 @@
 
 @code {
     [Parameter]
-    public ICollection<Api> Apis { get; set; }
+    public ICollection<Api>? Apis { get; set; }
     private bool editAllowed = false; // Disable editing until we move subtenant management out of the powershell scripts
-    private Api editingApi;         // The API being edited (or added)
+    private Api? editingApi;         // The API being edited (or added)
     private Api editingCopy = new(); // A copy to hold temporary changes
 
     // References for setting focus.
-    private MudTextField<string> pathFieldRef;
-    private MudButton saveButtonRef;
+    private MudTextField<string>? pathFieldRef;
+    private MudButton? saveButtonRef;
 
     // Flag to focus the Path field after adding a new row.
     private bool isNewlyAdded = false;
@@ -98,7 +98,7 @@
     /// </summary>
     private void CancelEdit()
     {
-        Apis.Remove(editingApi);
+        Apis!.Remove(editingApi!);
         editingApi = null;
     }
 
@@ -107,7 +107,7 @@
     /// </summary>
     private void DeleteApi(Api api)
     {
-        Apis.Remove(api);
+        Apis!.Remove(api);
     }
 
     /// <summary>
@@ -116,7 +116,7 @@
     private void AddNew()
     {
         var newApi = new Api();
-        Apis.Add(newApi);
+        Apis!.Add(newApi);
         isNewlyAdded = true;
         BeginEdit(newApi);
     }

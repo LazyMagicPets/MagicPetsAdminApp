@@ -63,14 +63,14 @@
 
 @code {
     [Parameter]
-    public ICollection<WebApp> WebApps { get; set; }
+    public ICollection<WebApp>? WebApps { get; set; }
     private bool editAllowed = false; // Disable editing until we move subtenant management out of the powershell scripts
-    private WebApp editingWebApp; // The WEBAPP being edited (or added)
+    private WebApp? editingWebApp; // The WEBAPP being edited (or added)
     private WebApp editingCopy = new(); // A copy to hold temporary changes
 
     // References for setting focus.
-    private MudTextField<string> pathFieldRef;
-    private MudButton saveButtonRef;
+    private MudTextField<string>? pathFieldRef;
+    private MudButton? saveButtonRef;
 
     // Flag to focus the Path field after adding a new row.
     private bool isNewlyAdded = false;
@@ -106,7 +106,7 @@
     /// </summary>
     private void CancelEdit()
     {
-        WebApps.Remove(editingWebApp);
+        WebApps!.Remove(editingWebApp!);
         editingWebApp = null;
     }
 
@@ -115,7 +115,7 @@
     /// </summary>
     private void DeleteWebApp(WebApp webapp)
     {
-        WebApps.Remove(webapp);
+        WebApps!.Remove(webapp!);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@
                 AppName = "",
                 Suffix = "{ts}"
             };
-        WebApps.Add(newWebApp);
+        WebApps!.Add(newWebApp);
         isNewlyAdded = true;
         BeginEdit(newWebApp);
     }
