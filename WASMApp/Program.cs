@@ -61,12 +61,6 @@ public partial class Program
         .AddSingleton<IStaticAssets>(sp => new BlazorStaticAssets(
             sp.GetRequiredService<ILoggerFactory>(), 
             new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) }))
-        .AddSingleton<ILzMessages, LzMessages>()
-        .AddSingleton<ILzClientConfig, LzClientConfig>()
-        .AddSingleton<LazyMagic.Blazor.BlazorInternetConnectivity>()
-
-        .AddSingleton<IBlazorInternetConnectivity>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
-        .AddSingleton<IInternetConnectivitySvc>(sp => sp.GetRequiredService<BlazorInternetConnectivity>())
         .AddSingleton<ILzHost>(sp => new LzHost(
             appPath: (string)_appConfig!["appPath"]!, // app path
             appUrl: (string)_appConfig!["appUrl"]!, // app url  
@@ -78,13 +72,9 @@ public partial class Program
             isAndroid: false,
             isLocal: isLocal,
             useLocalhostApi: useLocalhostApi))
-        .AddSingleton<IOSAccess, BlazorOSAccess>()
-        .AddSingleton<IBaseAppJS, BaseAppJS>()
         .AddBlazorUI(); // See Config/ConfigureViewModels.cs
 
-
         var host = builder.Build();
-
 
         // Wait for the page to fully load to finish up the Blazor app configuration
         var jsRuntime = host.Services.GetRequiredService<IJSRuntime>();

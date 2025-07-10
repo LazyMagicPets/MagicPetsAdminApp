@@ -20,8 +20,11 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<PackageReference Include="BaseApp.ViewModels" />
 		<PackageReference Include="AdminApi" />
-
+		<PackageReference Include="ConsumerApi" />
+		<PackageReference Include="StoreApi" />
+		<PackageReference Include="PublicApi" />
 	</ItemGroup>
 
 </Project>

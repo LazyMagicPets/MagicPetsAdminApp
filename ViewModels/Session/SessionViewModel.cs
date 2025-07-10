@@ -19,7 +19,8 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
         [FactoryInject] ILzMessages messages, // singleton
         [FactoryInject] IAuthProcess authProcess, // transient
         [FactoryInject] ITenantUsersViewModelFactory tenantusersViewModelFactory, // transient  
-        [FactoryInject] ISubtenantsViewModelFactory subtenantsViewModelFactory // singleton
+        [FactoryInject] ISubtenantsViewModelFactory subtenantsViewModelFactory, // singleton
+        ISessionsViewModel sessionsViewModel
         )
         : base(loggerFactory, authProcess, clientConfig, internetConnectivity, messages)  
     {
@@ -31,10 +32,17 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
             authProcess.SetSignUpAllowed(false);
 
 
-            var sessionId = Guid.NewGuid().ToString(); 
+            var sessionId = Guid.NewGuid().ToString();
 
-            ILzHttpClient httpClientAdmin = new LzHttpClient(loggerFactory, authProcess.AuthProvider, lzHost, sessionId);
-            Admin = new AdminApi.AdminApi(httpClientAdmin);
+            var httpClient = new LzHttpClient(loggerFactory, authProcess.AuthProvider, lzHost, sessionId);
+            
+            Admin = new AdminApi.AdminApi(httpClient);
+
+            Store = new StoreApi.StoreApi(httpClient);
+
+            Consumer = new ConsumerApi.ConsumerApi(httpClient);
+
+            Public = new PublicApi.PublicApi(httpClient);
 
             this.tenantusersViewModelFactory = tenantusersViewModelFactory ?? throw new ArgumentNullException(nameof(tenantusersViewModelFactory));
             TenantUsersViewModel = tenantusersViewModelFactory.Create(this);
@@ -50,6 +58,10 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
         }
     }
     public IAdminApi Admin { get; set; }
+    public IStoreApi Store { get; set; } 
+    public IConsumerApi Consumer { get; set; }
+    public IPublicApi Public { get; set; }
+
     private ITenantUsersViewModelFactory tenantusersViewModelFactory;
     private ISubtenantsViewModelFactory subtenantsViewModelFactory;
 

@@ -14,6 +14,9 @@ public static class ConfigureViewModels
         services.AddLazyMagicAuthCognito();
         services.AddSingleton<ISessionsViewModel, SessionsViewModel>();
         services.AddSingleton<IAdminApi, AdminApi.AdminApi>();
+        services.TryAddTransient<IStoreApi, StoreApi.StoreApi>();
+        services.TryAddTransient<IConsumerApi, ConsumerApi.ConsumerApi>();
+        services.TryAddTransient<IPublicApi, PublicApi.PublicApi>();
 
         return services;
     }
