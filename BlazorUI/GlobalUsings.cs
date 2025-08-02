@@ -8,4 +8,5 @@ global using MudBlazor.Services;
 global using ViewModels;
 global using System.Reflection;
 global using System.Reactive.Linq;
+global using AdminModule;
 

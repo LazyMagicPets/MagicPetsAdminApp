@@ -9,20 +9,24 @@ namespace ViewModels;
 /// the data (in this case the PetsViewMode).
 /// </summary>
 [Factory]
-public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionViewModel
+public class SessionViewModel : BaseAppSessionViewModel, ISessionViewModel, ICurrentSessionViewModel
 {
     public SessionViewModel(
         [FactoryInject] ILoggerFactory loggerFactory, // singleton
         [FactoryInject] ILzClientConfig clientConfig, // singleton
-        [FactoryInject] IInternetConnectivitySvc internetConnectivity, // singleton
+        [FactoryInject] IConnectivityService connectivityService, // singleton
         [FactoryInject] ILzHost lzHost, // singleton
         [FactoryInject] ILzMessages messages, // singleton
         [FactoryInject] IAuthProcess authProcess, // transient
         [FactoryInject] ITenantUsersViewModelFactory tenantusersViewModelFactory, // transient  
         [FactoryInject] ISubtenantsViewModelFactory subtenantsViewModelFactory, // singleton
+        [FactoryInject] IPetsViewModelFactory petsViewModelFactory, // transient
+        [FactoryInject] ICategoriesViewModelFactory categoriesViewModelFactory, // transient
+        [FactoryInject] ITagsViewModelFactory tagsViewModelFactory, // transient
         ISessionsViewModel sessionsViewModel
         )
-        : base(loggerFactory, authProcess, clientConfig, internetConnectivity, messages)  
+        : base(loggerFactory, authProcess, clientConfig, connectivityService, messages,
+            petsViewModelFactory, categoriesViewModelFactory, tagsViewModelFactory)  
     {
         try
         {
@@ -31,24 +35,11 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
             authProcess.SetAuthenticator(clientConfig.AuthConfigs?["TenantAuth"]!);
             authProcess.SetSignUpAllowed(false);
 
-
-            var sessionId = Guid.NewGuid().ToString();
-
-            var httpClient = new LzHttpClient(loggerFactory, authProcess.AuthProvider, lzHost, sessionId);
-            
-            Admin = new AdminApi.AdminApi(httpClient);
-
-            Store = new StoreApi.StoreApi(httpClient);
-
-            Consumer = new ConsumerApi.ConsumerApi(httpClient);
-
-            Public = new PublicApi.PublicApi(httpClient);
-
             this.tenantusersViewModelFactory = tenantusersViewModelFactory ?? throw new ArgumentNullException(nameof(tenantusersViewModelFactory));
-            TenantUsersViewModel = tenantusersViewModelFactory.Create(this);
+            TenantUsersViewModel = tenantusersViewModelFactory.Create();
 
             this.subtenantsViewModelFactory = subtenantsViewModelFactory ?? throw new ArgumentNullException(nameof(subtenantsViewModelFactory));
-            SubtenantsViewModel = subtenantsViewModelFactory.Create(this);
+            SubtenantsViewModel = subtenantsViewModelFactory.Create();
 
         }
         catch (Exception ex)
@@ -57,10 +48,6 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
             throw new Exception("oops");
         }
     }
-    public IAdminApi Admin { get; set; }
-    public IStoreApi Store { get; set; } 
-    public IConsumerApi Consumer { get; set; }
-    public IPublicApi Public { get; set; }
 
     private ITenantUsersViewModelFactory tenantusersViewModelFactory;
     private ISubtenantsViewModelFactory subtenantsViewModelFactory;
@@ -80,10 +67,10 @@ public class SessionViewModel : LzSessionViewModelAuthNotifications, ISessionVie
     public override async Task UnloadAsync()
     {
         if(TenantUsersViewModel != null)
-           TenantUsersViewModel = tenantusersViewModelFactory.Create(this);
+           TenantUsersViewModel = tenantusersViewModelFactory.Create();
 
         if(SubtenantsViewModel != null)
-            SubtenantsViewModel = subtenantsViewModelFactory.Create(this);
+            SubtenantsViewModel = subtenantsViewModelFactory.Create();
 
         await Task.Delay(0);    
     }

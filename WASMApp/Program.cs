@@ -1,16 +1,10 @@
-using BlazorUI;
-using LazyMagic.Client.Base;
-using LazyMagic.Blazor;
-using Microsoft.JSInterop;
-using Microsoft.AspNetCore.Components.Web;
-using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using ViewModels;
-
-namespace WASMApp;
-
 public partial class Program
 {
+    // _appConfig must be static so that those classes that are registered in the DI container can access it.
+    // It is set after the page has loaded and the app config has been retrieved from the
+    // JavaScript global variable window.appConfig.
+    // For a WASM app, the appConfig.json is loaded from the host.
+
     private static JObject? _appConfig;
 
     private static async Task Main(string[] args)
@@ -32,7 +26,6 @@ public partial class Program
         //  "ASPNETCORE_ENVIRONMENT": "Localhost"
         //  useLocalhostApi will be true else false
 
-
         var hostEnvironment = builder.HostEnvironment;
         var isLocal = false; // Is the code being served from a local development host?
         var useLocalhostApi = false;
@@ -50,30 +43,37 @@ public partial class Program
                 break;
         }
 
+
         // Configure logging
         builder.Logging.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Debug); // Set minimum log level
-        builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);  // Only show Warning and above for ASP.NET Core
-        builder.Logging.AddFilter("MudBlazor", LogLevel.Warning);  // Only show Warning and above for MudBlazor
+        builder.Logging.AddFilter("Microsoft.AspNetCore",
+            LogLevel.Warning); // Only show Warning and above for ASP.NET Core
 
+        // Here, we only register classes that require specific WASM configuration.
+        // The call to AddBlazorUI() will register all the other classes that are not WASM specific.
         builder.Services
-        
-        .AddSingleton(sp => new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) })
-        .AddSingleton<IStaticAssets>(sp => new BlazorStaticAssets(
-            sp.GetRequiredService<ILoggerFactory>(), 
-            new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) }))
-        .AddSingleton<ILzHost>(sp => new LzHost(
-            appPath: (string)_appConfig!["appPath"]!, // app path
-            appUrl: (string)_appConfig!["appUrl"]!, // app url  
-            androidAppUrl: "", // android app url not used in WASM
-            remoteApiUrl: (string)_appConfig!["remoteApiUrl"]!,  // api url
-            localApiUrl: (string)_appConfig!["localApiUrl"]!, // local api url
-            assetsUrl: (string)_appConfig!["assetsUrl"]!, // tenancy assets url
-            isMAUI: false, // sets isWASM to true
-            isAndroid: false,
-            isLocal: isLocal,
-            useLocalhostApi: useLocalhostApi))
-        .AddBlazorUI(); // See Config/ConfigureViewModels.cs
+            .AddSingleton(sp => new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) })
 
+            .AddSingleton<IStaticAssets>(sp => new BlazorStaticAssets(
+                sp.GetRequiredService<ILoggerFactory>(),
+                new HttpClient { BaseAddress = new Uri((string)_appConfig!["assetsUrl"]!) }))
+            .AddSingleton<ILzHost>(sp => new LzHost(
+                appPath: (string)_appConfig!["appPath"]!, // app path
+                appUrl: (string)_appConfig!["appUrl"]!, // app url  
+                androidAppUrl: "", // android app url not used in WASM
+                remoteApiUrl: (string)_appConfig!["remoteApiUrl"]!, // api url
+                localApiUrl: (string)_appConfig!["localApiUrl"]!, // local api url
+                assetsUrl: (string)_appConfig!["assetsUrl"]!, // tenancy assets url
+                isMAUI: false, // sets isWASM to true
+                isAndroid: false,
+                isLocal: isLocal,
+                useLocalhostApi: useLocalhostApi));
+
+        // This adds all the App ViewModels
+        builder.Services.AddAppViewModels();
+
+        // This adds all the App Components
+        builder.Services.AddBlazorUI();
         var host = builder.Build();
 
         // Wait for the page to fully load to finish up the Blazor app configuration
@@ -89,6 +89,7 @@ public partial class Program
         }
 
         await host.RunAsync();
+
     }
 
     private static async Task LoadStaticAssets(IJSRuntime jsRuntime)

@@ -1,9 +1,9 @@
 @namespace BlazorUI
 @page "/SubtenantsPage"
 @inherits LzComponentBasePassViewModel<SubtenantsViewModel>
-@inject ISessionsViewModel SessionsViewModel
+@inject ICurrentSessionViewModel CurrentSessionViewModel
 @inject NavigationManager NavigationManager
-@inject ISnackbar Snakbar
+@inject IAdminModuleClient AdminModuleClient
 
 
 <h3>SubtenantsPage</h3>
@@ -60,7 +60,7 @@ else
 
     protected override async void OnInitialized()
     {
-        ViewModel = SessionsViewModel!.SessionViewModel!.SubtenantsViewModel;
+        ViewModel = CurrentSessionViewModel!.SubtenantsViewModel;
         await SubtenantsReloadAsync();
         base.OnInitialized();
     }
@@ -97,8 +97,9 @@ else
     private async Task SeedPetsAsync(SubtenantModel subtenant)
     {
         var id = subtenant.Id;
-        try {
-            await SessionsViewModel!.SessionViewModel!.Admin.SeedPetsAsync(id,5); 
+        try 
+        {
+            await AdminModuleClient.AdminModuleSeedPetsAsync(id, 5);
             Snackbar!.Add("Seedpets Succeded", Severity.Success);   
         }
         catch 

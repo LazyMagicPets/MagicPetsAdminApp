@@ -1,6 +1,6 @@
 ﻿namespace ViewModels;
 
-public interface ISessionsViewModel : IBaseAppSessionsViewModelAuthNotifications<ISessionViewModel>
+public interface ISessionsViewModel : IBaseAppSessionsViewModel<ISessionViewModel>
 {
 
 }

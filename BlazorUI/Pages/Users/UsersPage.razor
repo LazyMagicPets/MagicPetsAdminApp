@@ -1,7 +1,7 @@
 @namespace BlazorUI
 @page "/UsersPage"
 @inherits LzComponentBasePassViewModel<TenantUsersViewModel>
-@inject ISessionsViewModel SessionsViewModel
+@inject ICurrentSessionViewModel CurrentSessionViewModel
 @inject NavigationManager NavigationManager
 
 
@@ -46,7 +46,7 @@ else
 
     protected override async void OnInitialized()
     {
-        ViewModel = SessionsViewModel!.SessionViewModel!.TenantUsersViewModel;
+        ViewModel = CurrentSessionViewModel!.TenantUsersViewModel;
         await UsersReloadAsync();
         base.OnInitialized();
     }

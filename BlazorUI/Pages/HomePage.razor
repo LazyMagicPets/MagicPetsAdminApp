@@ -8,18 +8,7 @@
         CoreComponentBase<T> - view model injected directly
         CoreComponentBasePassViewModel<T> - view model passed as parameter
 *@
-@inherits LzComponentBaseAssignViewModel<ISessionViewModel>
-
-@*
-    SessionsViewModel
-    Most pages inject ISessionsViewModel and the ISessionModel is assigned in the OnInitializedAsync method
-        ViewModel = SessionsViewModel.SessionViewModel
-    Note: The bindings of the component to the underlying view model, (in this case ISessionViewModel),
-    are one-to-one. You can't bind multiple view models to a single component. This is a limitation imposed by
-    the underlying ReactiveUI ReactiveComponentBase class. Generally, this is a good thing. If you find you are 
-    trying to use multiple view models in the same component, it's a good indication you need another component.
-*@
-@inject ISessionsViewModel SessionsViewModel
+@inherits LzComponentBaseInjectViewModel<ICurrentSessionViewModel>
 
 @if(isBusy) {
     <Busy />
@@ -56,24 +45,7 @@
     private string headers = string.Empty;  
     private bool isBusy = false;
 
-    protected override async Task OnInitializedAsync()
-    {
-        ViewModel = SessionsViewModel.SessionViewModel;
-        await base.OnInitializedAsync();
-    }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        // if(ViewModel!.IsSignedIn && showAdminRequiredDialog == false) {
-        //     // Check if user is signed in as Administrator
-        //     var isAdmin = await ViewModel.Admin.IsAdminAsync();
-        //     if (!isAdmin)
-        //     {
-        //         showAdminRequiredDialog = true;
-        //     }
-        // }
-        await base.OnAfterRenderAsync(firstRender);
-    }
     private async void CloseShowAdminRequiredDialog()
     {
         await ViewModel!.AuthProcess.SignOutAsync();
