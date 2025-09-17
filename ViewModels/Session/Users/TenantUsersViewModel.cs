@@ -5,7 +5,7 @@ using AdminModule;
 using LazyMagic.Client.FactoryGenerator; // do not put in global using. Causes runtime error.
 [Factory]
 
-public class TenantUsersViewModel : LzItemsViewModelAuthNotifications<TenantUserViewModel, TenantUser, TenantUserModel>
+public class TenantUsersViewModel : LzItemsViewModel<TenantUserViewModel, TenantUser, TenantUserModel>
 {
     public TenantUsersViewModel(
         [FactoryInject] ILoggerFactory loggerFactory,

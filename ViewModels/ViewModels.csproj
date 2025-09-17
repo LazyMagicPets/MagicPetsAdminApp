@@ -13,7 +13,10 @@
 	</ItemGroup>	
 	
 	<ItemGroup>
-		<PackageReference Include="LazyMagic.Client.FactoryGenerator" PrivateAssets="all" OutputItemType="Analyzer" />
+		<PackageReference Include="LazyMagic.Client.FactoryGenerator"  />
+		<PackageReference Include="LazyMagic.OIDC.Base" />
+		<PackageReference Include="ReactiveUI.Fody" />
+		<PackageReference Include="ReactiveUI" />
 	</ItemGroup>
 	
 	<ItemGroup>

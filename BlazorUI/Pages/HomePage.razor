@@ -1,56 +1,10 @@
 ﻿@namespace BlazorUI
-@page "/HomePage"
-@*
-    CoreComponentBaseAssignViewModel<T> : LzReactiveComponentBaseAssignViewModel<T>
-    LzReactiveComponentBaseAssignViewModel<T> : ComponentBase, IViewFor<T>, INotifyPropertyChanged, ICanActivate, IDisposable
-    CoreComponentBaseAssignViewModel instruments the component with ReactiveUI bindings making it easy to implement MVVM with Blazor.
-    See also: 
-        CoreComponentBase<T> - view model injected directly
-        CoreComponentBasePassViewModel<T> - view model passed as parameter
-*@
-@inherits LzComponentBaseInjectViewModel<ICurrentSessionViewModel>
+@page "/"
+@inherits LzComponentBaseInjectViewModel<ISessionViewModel>
 
-@if(isBusy) {
-    <Busy />
-} else {
-    <MudPaper >
-        <MudContainer Fixed="true">
+<MudPaper Height="400px" Width="600px">
+    <MudContainer Fixed="true">
+        <MudText>Home Page</MudText>
+    </MudContainer>
+</MudPaper>
 
-            @if (ViewModel!.IsSignedIn)
-            {
-                <h1>Welcome, @ViewModel!.AuthProcess.Login</h1>
-            }
-            else
-            {
-                <h1>Hi there, lets get connected!</h1>
-            }
-            <LzAuth ViewModel="@ViewModel!.AuthProcess" />
-        </MudContainer>
-    </MudPaper>
-}
-
-
-<MudDialog @bind-Visible="@showAdminRequiredDialog">
-    <DialogContent>
-        <p>Only Administrators can access this page.</p>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="CloseShowAdminRequiredDialog">Continue</MudButton>
-    </DialogActions>
-</MudDialog>
-
-
-@code {
-    private bool showAdminRequiredDialog = false;
-    private string headers = string.Empty;  
-    private bool isBusy = false;
-
-
-    private async void CloseShowAdminRequiredDialog()
-    {
-        await ViewModel!.AuthProcess.SignOutAsync();
-        showAdminRequiredDialog = false;
-    }   
-
-
-}

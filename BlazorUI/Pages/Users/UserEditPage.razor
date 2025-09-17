@@ -1,7 +1,7 @@
 @namespace BlazorUI
 @page "/UserEditPage"
 @inherits LzComponentBaseAssignViewModel<TenantUserViewModel>
-@inject ICurrentSessionViewModel CurrentSessionViewModel
+@inject ISessionViewModel CurrentSessionViewModel
 @inject NavigationManager NavigationManager
 @inject ILoggerFactory LoggerFactory
 @inject ITenantUserViewModelFactory TenantUserViewModelFactory
@@ -9,6 +9,7 @@
 <h3>UserPage</h3>
 
 @using FluentValidation
+
 
 <MudCard>
     <MudForm Model="@model" 
