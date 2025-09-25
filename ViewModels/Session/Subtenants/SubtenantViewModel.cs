@@ -1,25 +1,25 @@
 ﻿namespace ViewModels;
+
+using AdminModule;
 using LazyMagic.Client.FactoryGenerator; // do not put in global using. Causes runtime error.
 [Factory]
 
-public class SubtenantViewModel : LzItemViewModelAuthNotifications<Subtenant, SubtenantModel>
+public class SubtenantViewModel : LzItemViewModel<Subtenant, SubtenantModel>
 {
     public SubtenantViewModel(
         [FactoryInject] ILoggerFactory loggerFactory,
-        ISessionViewModel sessionViewModel,
+        [FactoryInject] IAdminModuleClient adminModuleClient,
         ILzParentViewModel parentViewModel,
         Subtenant subtenant,
         bool? isLoaded = null
-        ) : base(loggerFactory, sessionViewModel, subtenant, model: null, isLoaded)
+        ) : base(loggerFactory, subtenant, model: null, isLoaded)
     {
-        _sessionViewModel = sessionViewModel;
         ParentViewModel = parentViewModel;
-        _DTOCreateAsync = sessionViewModel.Admin.AddSubtenantAsync;
-        _DTOReadAsync = sessionViewModel.Admin.GetSubtenantByIdAsync;
-        _DTOUpdateAsync = sessionViewModel.Admin.UpdateSubtenantAsync;
-        _DTODeleteAsync = sessionViewModel.Admin.DeleteSubtenantAsync;
+        _DTOCreateAsync = adminModuleClient.AdminModuleAddSubtenantAsync;
+        _DTOReadAsync = adminModuleClient.AdminModuleGetSubtenantByIdAsync;
+        _DTOUpdateAsync = adminModuleClient.AdminModuleUpdateSubtenantAsync;
+        _DTODeleteAsync = adminModuleClient.AdminModuleDeleteSubtenantAsync;
     }
-    private ISessionViewModel _sessionViewModel;
     public override string Id => Data?.Id ?? string.Empty;
     public override long UpdatedAt => Data?.UpdateUtcTick ?? long.MaxValue;
 

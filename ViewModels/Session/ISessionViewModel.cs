@@ -4,9 +4,8 @@ using System.ComponentModel;
 
 namespace ViewModels;
 
-public interface ISessionViewModel : ILzSessionViewModelAuthNotifications
+public interface ISessionViewModel : IBaseAppSessionViewModel
 {
-    IAdminApi Admin { get; set; }   
     TenantUsersViewModel TenantUsersViewModel { get; set; }
     SubtenantsViewModel SubtenantsViewModel { get; set; }
     string TenantName { get; set; }

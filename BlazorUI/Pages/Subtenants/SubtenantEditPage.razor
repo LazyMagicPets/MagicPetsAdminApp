@@ -1,9 +1,10 @@
  @namespace BlazorUI
 @page "/SubtenantEditPage"
 @inherits LzComponentBaseAssignViewModel<SubtenantViewModel>
-@inject ISessionsViewModel SessionsViewModel
+@inject ISessionViewModel CurrentSessionViewModel
 @inject NavigationManager NavigationManager
 @inject ILoggerFactory LoggerFactory
+@inject ISubtenantViewModelFactory SubtenantViewModelFactory
 
 <h3>UserPage</h3>
 
@@ -59,13 +60,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        SubtenantsViewModel = SessionsViewModel!.SessionViewModel!.SubtenantsViewModel!;
+        SubtenantsViewModel = CurrentSessionViewModel!.SubtenantsViewModel!;
         ViewModel = SubtenantsViewModel!.EditViewModel!;  // EditViewModel was assigned in the SubtenantsViewModel if we are editing an existing item.
         if (ViewModel == null)
         {
             // Create a new UserViewModel if the UserssViewModel didn't
             var subtenant = SubtenantViewModel.NewSubtenant(); 
-            ViewModel = new SubtenantViewModel(LoggerFactory, SessionsViewModel!.SessionViewModel, SubtenantsViewModel, subtenant);
+            ViewModel = SubtenantViewModelFactory.Create(SubtenantsViewModel, subtenant);
             ViewModel.State = LzItemViewModelState.New;
         }
         var (success, msg) = await ViewModel.OpenEditAsync(); // copies the existing data so cancel can restore it

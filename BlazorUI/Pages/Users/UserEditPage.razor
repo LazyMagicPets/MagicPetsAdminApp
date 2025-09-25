@@ -1,13 +1,15 @@
 @namespace BlazorUI
 @page "/UserEditPage"
 @inherits LzComponentBaseAssignViewModel<TenantUserViewModel>
-@inject ISessionsViewModel SessionsViewModel
+@inject ISessionViewModel CurrentSessionViewModel
 @inject NavigationManager NavigationManager
 @inject ILoggerFactory LoggerFactory
+@inject ITenantUserViewModelFactory TenantUserViewModelFactory
 
 <h3>UserPage</h3>
 
 @using FluentValidation
+
 
 <MudCard>
     <MudForm Model="@model" 
@@ -61,7 +63,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        UsersViewModel = SessionsViewModel!.SessionViewModel!.TenantUsersViewModel!;
+        UsersViewModel = CurrentSessionViewModel!.TenantUsersViewModel!;
         ViewModel = UsersViewModel!.EditViewModel!;  
         if (ViewModel == null)
         {
@@ -71,7 +73,7 @@
             user.Login = "";
             user.Name = ""; // null value is not allowed
             user.Email = "";
-            ViewModel = new TenantUserViewModel(LoggerFactory, SessionsViewModel!.SessionViewModel, UsersViewModel, user);
+            ViewModel = TenantUserViewModelFactory.Create(UsersViewModel, user);
             ViewModel.State = LzItemViewModelState.New;
         }
         var (success, msg) = await ViewModel.OpenEditAsync(); // copies the existing data so cancel can restore it

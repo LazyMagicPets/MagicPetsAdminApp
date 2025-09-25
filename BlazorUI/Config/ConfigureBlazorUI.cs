@@ -8,17 +8,14 @@ public static class ConfigureBlazorUI
 {
     public static IServiceCollection AddBlazorUI(this IServiceCollection services)
     {
-        return services
-            .AddMudServices()
-            .AddAppViewModels()
-            //.AddLazyMagicAuthCognito()
-            ;
+        services.AddBaseAppBlazorUI();
+        return services;
     }
     public static ILzMessages AddBlazorUIMessages(this ILzMessages lzMessages)
     {
+        lzMessages.AddBaseAppMessages(); // Add the BaseApp messages    
+
         List<string> messages = [
-            "system/{culture}/System/AuthMessages.json",
-            "system/{culture}/System/BaseMessages.json",
             "system/{culture}/AdminApp/Messages.json",
             ];
         lzMessages.MessageFiles.AddRange(messages);

@@ -1,22 +1,23 @@
 ﻿namespace ViewModels;
+
+using AdminModule;
 using LazyMagic.Client.FactoryGenerator; // do not put in global using. Causes runtime error.
 [Factory]
 
-public class SubtenantsViewModel : LzItemsViewModelAuthNotifications<SubtenantViewModel, Subtenant, SubtenantModel>
+public class SubtenantsViewModel : LzItemsViewModel<SubtenantViewModel, Subtenant, SubtenantModel>
 {
     public SubtenantsViewModel(
         [FactoryInject] ILoggerFactory loggerFactory,
-        ISessionViewModel sessionViewModel,
-        [FactoryInject] ISubtenantViewModelFactory subtenantViewModelFactory) : base(loggerFactory, sessionViewModel)
+        [FactoryInject] IAdminModuleClient adminModuleClient,
+        [FactoryInject] ISubtenantViewModelFactory subtenantViewModelFactory) : base(loggerFactory)
     {
-        _sessionViewModel = sessionViewModel;
         SubtenantViewModelFactory = subtenantViewModelFactory;
-        _DTOReadListAsync = sessionViewModel.Admin.ListSubtenantsAsync;
+        _DTOReadListAsync = adminModuleClient.AdminModuleListSubtenantsAsync;
     }
     private ISessionViewModel _sessionViewModel;
     public ISubtenantViewModelFactory? SubtenantViewModelFactory { get; init; }
     public override (SubtenantViewModel, string) NewViewModel(Subtenant dto)
-        => (SubtenantViewModelFactory!.Create(_sessionViewModel, this, dto), string.Empty);
+        => (SubtenantViewModelFactory!.Create(this, dto), string.Empty);
 
 }
 
