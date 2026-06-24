@@ -14,7 +14,7 @@ public static class ConfigureViewModels
 
 
         // Register the ClientSDK 
-        services.AddScoped<IAdminApi>(serviceProvider =>
+        services.AddScoped<IAppApi>(serviceProvider =>
         {
             var lzHost = serviceProvider.GetRequiredService<ILzHost>();
             var authenticationHandler = serviceProvider.GetRequiredService<IAuthenticationHandler>();
@@ -23,15 +23,15 @@ public static class ConfigureViewModels
             {
                 BaseAddress = new Uri(lzHost.GetApiUrl("")) // LocalApiUrl or RemoteApiUrl depending on UseLocalhostApi property
             };
-            var api = new AdminApi.AdminApi(httpClient);
+            var api = new AppApi.AppApi(httpClient);
             return api;
         });
 
         // Register the modules used from the Client SDK.
-        services.AddScoped<IAdminModuleClient>(provider => provider.GetRequiredService<IAdminApi>());
-        services.AddScoped<IPublicModuleClient>(provider => provider.GetRequiredService<IAdminApi>());
-        services.AddScoped<IConsumerModuleClient>(provider => provider.GetRequiredService<IAdminApi>());
-        services.AddScoped<IStoreModuleClient>(provider => provider.GetRequiredService<IAdminApi>());
+        services.AddScoped<IAdminModuleClient>(provider => provider.GetRequiredService<IAppApi>());
+        services.AddScoped<IPublicModuleClient>(provider => provider.GetRequiredService<IAppApi>());
+        services.AddScoped<IConsumerModuleClient>(provider => provider.GetRequiredService<IAppApi>());
+        services.AddScoped<IStoreModuleClient>(provider => provider.GetRequiredService<IAppApi>());
 
         services.AddScoped<ISessionViewModel, SessionViewModel>();
         services.AddTransient<IBaseAppSessionViewModel>(sp => sp.GetRequiredService<ISessionViewModel>());

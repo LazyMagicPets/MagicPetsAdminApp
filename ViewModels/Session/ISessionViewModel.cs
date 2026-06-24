@@ -1,5 +1,5 @@
-﻿
-using AdminApi;
+
+using AppApi;
 using System.ComponentModel;
 
 namespace ViewModels;

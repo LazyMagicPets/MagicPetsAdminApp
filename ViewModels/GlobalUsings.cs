@@ -7,7 +7,7 @@ global using Microsoft.Extensions.Logging;
 global using Newtonsoft.Json.Linq;
 global using SharedSchema;
 global using System.ComponentModel;
-global using AdminApi;
+global using AppApi;
 global using AdminSchema;
 global using System.Reflection;
 global using AdminModule;

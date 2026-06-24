@@ -5,6 +5,15 @@ public class Program
     private static JObject? _appConfig;
     public static async Task Main(string[] args)
     {
+        // ReactiveUI 23.x removed automatic initialization (20.x auto-initialized
+        // via the RxApp static ctor). It must now be initialized explicitly via the
+        // builder before any WhenAnyValue / [Reactive] usage — and the LazyMagic /
+        // BaseApp ViewModel base classes call WhenAnyValue in their constructors,
+        // which run during the first component render. Without this call the first
+        // reactive access throws TypeInitializationException on
+        // ReactiveNotifyPropertyChangedMixin and the app fails to boot.
+        LazyMagic.Blazor.LzReactiveUI.InitializeWasm();
+
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
         builder.RootComponents.Add<Main>("#main");
         builder.RootComponents.Add<HeadOutlet>("head::after");
