@@ -11,6 +11,15 @@ public static class MauiProgram
 
     public static MauiApp CreateMauiApp()
     {
+        // ReactiveUI 23.x removed automatic initialization (20.x auto-initialized via
+        // the RxApp static ctor). The LazyMagic / BaseApp ViewModel base classes call
+        // WhenAnyValue in their constructors, which run during the first component
+        // render — so ReactiveUI MUST be initialized for the MAUI Blazor Hybrid host
+        // before Build(). Without this the first reactive access throws
+        // TypeInitializationException on ReactiveNotifyPropertyChangedMixin and the app
+        // fails to boot. Idempotent. (WASM uses LzReactiveUI.InitializeWasm().)
+        LazyMagic.Blazor.LzReactiveUI.InitializeHybrid();
+
         var builder = MauiApp.CreateBuilder();
         builder
         .UseMauiApp<App>()

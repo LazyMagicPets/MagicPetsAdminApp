@@ -1,7 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 	<Import Project="$(MSBuildProjectDirectory)/../Solution.Build.props" />
 	<PropertyGroup>
-		<!-- Define the app path for different configurations -->
+		<!-- Define the app path for different configurations.
+		     Release (cloud): /admin/ — assets publish under wwwroot/admin/ and are
+		       served at /admin/ by CloudFront.
+		     Debug (local dev server): / — the WASM dev server serves _framework/
+		       _content at the ROOT and does NOT honor StaticWebAssetBasePath as a
+		       serving prefix, so to run the app under /admin/ locally we pass the dev
+		       server ASPNETCORE_PATHBASE=/admin (launchSettings.json), which shifts the
+		       root-served assets under /admin/ to match base href /admin/. Keep Debug
+		       AppPath=/ so StaticWebAssetBasePath stays root here. -->
 		<AppPath Condition="'$(Configuration)' == 'Release'">/admin/</AppPath>
 		<AppPath Condition="'$(Configuration)' == 'Debug'">/</AppPath>
 		<StaticWebAssetBasePath>$(AppPath)</StaticWebAssetBasePath>
@@ -22,17 +30,17 @@
 		<PackageReference Include="Microsoft.Extensions.Logging" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
 		<PackageReference Include="LazyMagic.OIDC.WASM" />
+		<PackageReference Include="LazyMagic.OIDC.WASM.Bff" />
 
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="../BlazorUI/BlazorUI.csproj" />
 	</ItemGroup>
 
-	<Target Name="ProcessIndexTemplate" BeforeTargets="Build">
-		<WriteLinesToFile File="wwwroot/index.html"
-						  Lines="$([System.IO.File]::ReadAllText('wwwroot/index.template.html').Replace('{{BASE_HREF}}', '$(AppPath)'))"
-						  Overwrite="true" />
-	</Target>
+	<!-- index.html is now a hand-maintained, source-controlled file (base href is a
+	     config-independent literal "/admin/"). The former ProcessIndexTemplate target
+	     that generated it from index.template.html by substituting {{BASE_HREF}} has
+	     been removed along with the template. -->
 
 	<Target Name="FixCssPathsAfterPublish" AfterTargets="Publish" Condition="'$(AppPath)' != ''">
 		<PropertyGroup>

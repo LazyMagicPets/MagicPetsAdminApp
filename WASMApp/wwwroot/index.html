@@ -10,6 +10,11 @@
     <meta http-equiv="Cache-Control" content="no-cache">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Literal base path (formerly generated from index.template.html by the
+         ProcessIndexTemplate build target, now both removed). MUST end with a
+         trailing slash or Blazor's Router computes the wrong base-relative path and
+         every route falls through to <NotFound>. Local VS debug serves the app under
+         this path via ASPNETCORE_PATHBASE (launchSettings.json); cloud serves /admin/. -->
     <base href="/admin/" />
     <link href="WASMApp.styles.css" rel="stylesheet" />
     <link href="_content/LazyMagic.Blazor/css/app.css" rel="stylesheet" />

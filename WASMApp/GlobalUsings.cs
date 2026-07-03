@@ -2,8 +2,12 @@
 global using LazyMagic.Blazor;
 global using LazyMagic.Client.Base;
 global using LazyMagic.OIDC.WASM;
+global using LazyMagic.OIDC.WASM.Bff;
 global using Microsoft.AspNetCore.Components.Web;
+global using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 global using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
 global using Microsoft.JSInterop;
 global using Newtonsoft.Json.Linq;
 global using System.Reactive.Linq;

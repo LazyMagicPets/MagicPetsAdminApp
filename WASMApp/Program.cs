@@ -78,12 +78,60 @@ public class Program
 
         builder.Services.AddApp();
 
-        builder.Services.AddTransient<IAuthenticationHandler, BearerTokenHandler>();
+        // Auth-mode selection (mirrors StoreApp): config key "AuthMode" in
+        // wwwroot/appsettings.json. "Bff" → client-side BFF mode (no SPA tokens; the
+        // BffCredentialsHandler carries the HttpOnly __bff cookie + X-CSRF). Anything
+        // else keeps the SPA-token OIDC path. AdminApp uses tenantauth — the same pool
+        // and BFF client as StoreApp — so the BFF flow works unchanged.
+        var authMode = builder.Configuration["AuthMode"];
+        var useBff = string.Equals(authMode, "Bff", StringComparison.OrdinalIgnoreCase);
 
-        // Add dynamic OIDC authentication with lazy-loaded configuration
-        // This doesn't block startup waiting for config to load
-        builder.Services.AddLazyMagicOIDCWASM(); // Add services
-        builder.AddLazyMagicOIDCWASMBuilder(); // Add builder configuraiton
+        if (useBff)
+        {
+            Console.WriteLine("AuthMode=Bff: using client-side BFF auth");
+            // Employee-gated app: after logout, land on the public /explore/home/ landing (the BFF
+            // server fans it back to the originating subtenant host) instead of bouncing back through
+            // the gated admin app to the login.
+            builder.Services.AddLazyMagicOIDCWASMBff(
+                builder.HostEnvironment.BaseAddress,
+                postLogoutRedirectPath: "/explore/home/");
+        }
+        else
+        {
+            // Default SPA-token path — UNCHANGED.
+            builder.Services.AddTransient<IAuthenticationHandler, BearerTokenHandler>();
+
+            // Add dynamic OIDC authentication with lazy-loaded configuration
+            // This doesn't block startup waiting for config to load
+            builder.Services.AddLazyMagicOIDCWASM(); // Add services
+            builder.AddLazyMagicOIDCWASMBuilder(); // Add builder configuraiton
+
+            // LOCAL VS-DEBUG ONLY: pin the OIDC redirect_uri to THIS WASM's own
+            // origin (e.g. https://localhost:7218). The cloud /config serves
+            // RedirectUri=<apex>/oauth2/callback — the single Cognito-registered
+            // callback shared by every subtenant — and relies on CFAuthCallback
+            // fanning the OAuth response back to the originating subtenant via the
+            // wrapped `state`. That fan-back targets the /config host (the cloud
+            // subtenant), NEVER localhost, so a VS-hosted WASM would complete login
+            // on the cloud host and this local instance's authorize state would be
+            // orphaned (observed: "Found stale tokens ... cleaning up"). Redirecting
+            // straight back to the localhost origin fixes it — the dev callbacks
+            // https://localhost:7218/authentication/{login,logout}-callback are
+            // registered on the SPA client (systemconfig IncludeDevCallbackUrls;
+            // lz AwsAppRunnerCognitoComponent). This PostConfigure runs AFTER
+            // DynamicOidcPostConfigureOptions (registered inside AddLazyMagicOIDCWASM)
+            // so it wins. Guarded by isLocal → cloud (isLocal=false, and BFF anyway)
+            // is byte-for-byte unaffected.
+            if (isLocal)
+            {
+                var localOrigin = builder.HostEnvironment.BaseAddress.TrimEnd('/');
+                builder.Services.PostConfigure<RemoteAuthenticationOptions<OidcProviderOptions>>(options =>
+                {
+                    options.ProviderOptions.RedirectUri = $"{localOrigin}/authentication/login-callback";
+                    options.ProviderOptions.PostLogoutRedirectUri = $"{localOrigin}/authentication/logout-callback";
+                });
+            }
+        }
 
         var host = builder.Build();
 
@@ -101,7 +149,11 @@ public class Program
             return;
         }
 
-        await ConfigureLazyMagicOIDCWASM.LoadConfiguration(host);
+        // SPA-token OIDC config load. Skipped in BFF mode (no SPA OIDC services registered).
+        if (!useBff)
+        {
+            await ConfigureLazyMagicOIDCWASM.LoadConfiguration(host);
+        }
 
         await host.RunAsync();
 
